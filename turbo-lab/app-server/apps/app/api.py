@@ -1,11 +1,19 @@
 #-*- coding:utf-8 -*-
 
+import os
+import sys
 import turbo.log
+from turbo import app_config
+
 
 from base import BaseHandler
 
 logger = turbo.log.getLogger(__file__)
 
+task_path = os.path.join(os.path.dirname(app_config.app_setting.project_dir), 'celery-lab')
+sys.path.append(task_path)
+
+from proj import task
 
 class HomeHandler(BaseHandler):
 
@@ -24,11 +32,6 @@ class TestCeleryHandler(BaseHandler):
     sub_task = None
 
     def GET(self):
-        path = '/Users/zhyq0826/Documents/workspace/zhyq0826/celery-lab'
-        import sys
-        if path not in sys.path:
-            sys.path.append(path)
-        from proj import task
         task.add.delay(self._params['a'], self._params['b'])
 
  

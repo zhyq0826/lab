@@ -26,7 +26,8 @@ TURBO_APP_SETTING = ObjectDict(
         log_path=os.path.join("/var/log/", SERVER_NAME+'.log'),
         log_size=500*1024*1024,
         log_count=3,
-    )
+    ),
+    project_dir=PROJECT_DIR
 )
 
 # check if app start in debug
