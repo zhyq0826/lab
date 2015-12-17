@@ -1,0 +1,273 @@
+@bodyFontColor: #404b55;
+@headerColor: #404b55;
+@menuWidth: 240px;
+@navFontSize: 18px;
+@navHeight: 60px;
+@logoFontSize: @navFontSize+10;
+
+body {
+    color: @bodyFontColor;
+}
+
+
+#menu {
+    width: @menuWidth;
+    background: #fff;
+    position: relative;
+    // top: 60px;
+    // top:21px;
+    top:0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000; /* so the menu or its navicon stays above all content */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+
+    a {
+        color: @bodyFontColor;
+        border: none;
+        padding: 0.6em 0 0.6em 0em;
+        display: block;
+        text-decoration: none;
+        font-weight: 700;
+        text-align: left;
+
+        i {
+            width: 16px;
+            text-align: left;
+        }
+    }
+
+    .m-menu {
+        margin-top: 30px;
+    }
+
+    .m-menu,
+    .m-menu ul {
+        border: none;
+        background: transparent;
+    }
+
+
+    /*
+        Change color of the anchor links on hover/focus.
+    */
+    .m-menu {
+        li a:hover {
+            color: #2a80b5;
+        }
+
+        li a:focus {
+
+        }
+    }
+
+    .m-menu-user {
+        margin-bottom: 10px;
+
+        h4.name {
+            margin: 0px;
+            margin-left: 0px;
+            margin-top: 14px;
+            font-weight: 700;
+            color: @bodyFontColor;
+            font-size: 18px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+        }
+    }
+
+}
+
+
+.logo {
+    color:@bodyFontColor;
+    text-align: left;
+    font-weight: 700;
+    margin: 0;
+    padding: 0;
+    line-height: @navHeight;
+    font-size: @logoFontSize;
+    height: @navHeight;
+    //margin-top: 30px;
+    //padding-bottom: 0.8em;
+}
+
+
+.m-nav {
+    width: 100%;
+    padding: 21px 0;
+    text-align: right;
+    margin-right: 140px;
+    height: @navHeight;
+
+    a {
+        color: @headerColor;
+        font-weight: 700;
+        font-size: @navFontSize;
+        line-height: @navFontSize;
+        text-decoration: none;
+        display: inline-block;
+        width: 4em;
+        text-align: center;
+    }
+
+    a:hover{
+        // background: #f7f7f7 !important;
+        color:#439fe0 !important;
+    }
+}
+
+/*
+The content `<div>` is where all your content goes.
+*/
+.content {
+    margin: 0 auto;
+    padding: 0 2em;
+    max-width: 800px;
+    margin-bottom: 50px;
+    line-height: 1.6em;
+    overflow: hidden;
+
+    .m-header {
+        margin: 0;
+        color: #333;
+        margin-top: 30px;
+        padding-bottom: 0.8em;
+        border-bottom: 1px solid #eee;
+        position: relative;
+
+        .search-form {
+            position: relative;
+            display: inline-block;
+
+            input {
+                -webkit-transition: all 0.2s ease-out;
+                -moz-transition: all 0.2s ease-out;
+                -ms-transition: all 0.2s ease-out;
+                -o-transition: all 0.2s ease-out;
+                transition: all 0.2s ease-out;
+                width: 15em;
+
+                &.active {
+                    width: 25em;
+                }
+            }
+
+            .search-button {
+                position: absolute;
+                right: 0px;
+                top: 0px;
+                background: transparent;
+                border: none;
+                display: block;
+                width: 48px;
+                height: 100%;
+                outline: none;
+            }
+        }
+
+        .new-group-button {
+            position: absolute;
+            right: 0;
+        }
+    }
+}
+
+
+
+
+/*
+Add transition to containers so they can push in and out.
+*/
+#layout,
+#menu,
+.m-link {
+    -webkit-transition: all 0.2s ease-out;
+    -moz-transition: all 0.2s ease-out;
+    -ms-transition: all 0.2s ease-out;
+    -o-transition: all 0.2s ease-out;
+    transition: all 0.2s ease-out;
+}
+
+.pure-img-responsive {
+    max-width: 100%;
+    height: auto;
+}
+
+/*
+This is the parent `<div>` that contains the menu and the content area.
+*/
+#layout {
+    position: relative;
+    padding-left: 0;
+    width: 990px;
+    margin: 0 auto;
+
+    &.active {
+        #menu {
+            left: @menuWidth;
+            width: @menuWidth;
+        }
+
+        .menu-link {
+            left: @menuWidth;
+        }
+    }
+
+}
+
+
+
+.content-subhead {
+    margin: 50px 0 20px 0;
+    font-weight: 300;
+    color: #888;
+}
+
+
+
+
+@media (max-width:48em) {
+
+    /* Only apply this when the window is small. Otherwise, the following
+    case results in extra padding on the left:
+        * Make the window small.
+        * Tap the menu to trigger the active state.
+        * Make the window large again.
+    */
+    #layout.active {
+        position: relative;
+        // left: @menuWidth;
+    }
+
+}
+
+/*
+Hides the menu at `48em`, but modify this based on your app's needs.
+*/
+@media (min-width:48em) {
+    .content {
+        padding-left: 2em;
+        padding-right: 2em;
+    }
+
+    #layout {
+        // padding-left: @menuWidth; /* left col width "#menu" */
+        left: 0;
+    }
+
+    .m-link {
+        // position: fixed;
+        // left: 240;
+        // display: none;
+    }
+
+    #layout.active .menu-link {
+        left: @menuWidth;
+    }
+
+}

@@ -1,0 +1,285 @@
+@bodyFontColor: #404b55;
+@headerColor: #404b55;
+@menuWidth: 240px;
+@navFontSize: 18px;
+
+body {
+    color: @bodyFontColor;
+}
+
+
+#menu {
+    margin-left: -@menuWidth; /* "#menu" width */
+    width: @menuWidth;
+    background: #252A3A;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000; /* so the menu or its navicon stays above all content */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-right: 1px solid #ddd;
+
+    a {
+        color: #fff;
+        border: none;
+        padding: 0.6em 0 0.6em 0em;
+        display: block;
+        text-decoration: none;
+        font-weight: 700;
+        text-align: left;
+
+        i {
+            width: 16px;
+            text-align: left;
+        }
+    }
+
+    h1 {
+        color:#fff;
+        text-align: left;
+        font-weight: 700;
+        margin-left: 16px;
+    }
+    
+
+    .m-menu,
+    .m-menu ul {
+        border: none;
+        background: transparent;
+    }
+
+    .m-menu ul {
+        margin-left: 16px;
+    }
+
+    /*
+        Change color of the anchor links on hover/focus.
+    */
+    .m-menu {
+        li a:hover {
+            // background: #f2f2f5;
+            color: #2a80b5;
+        }
+
+        li a:focus {
+            /*background: #333;*/
+            // background: #439fe0;
+            color: #fff;
+        }
+
+    }
+}
+
+/*
+Add transition to containers so they can push in and out.
+*/
+#layout,
+#menu,
+.m-link {
+    -webkit-transition: all 0.2s ease-out;
+    -moz-transition: all 0.2s ease-out;
+    -ms-transition: all 0.2s ease-out;
+    -o-transition: all 0.2s ease-out;
+    transition: all 0.2s ease-out;
+}
+
+.pure-img-responsive {
+    max-width: 100%;
+    height: auto;
+}
+
+/*
+This is the parent `<div>` that contains the menu and the content area.
+*/
+#layout {
+    position: relative;
+    padding-left: 0;
+
+    &.active {
+        #menu {
+            left: @menuWidth;
+            width: @menuWidth;
+        }
+
+        .menu-link {
+            left: @menuWidth;
+        }
+    }
+
+}
+
+/*
+The content `<div>` is where all your content goes.
+*/
+.content {
+    margin: 0 auto;
+    padding: 0 2em;
+    max-width: 800px;
+    margin-bottom: 50px;
+    line-height: 1.6em;
+}
+
+.m-header {
+    margin: 0;
+    color: #333;
+    padding: 2.5em 2em 0.8em 0;
+    border-bottom: 1px solid #eee;
+    position: relative;
+
+    .search-form {
+        position: relative;
+        display: inline-block;
+
+        input {
+            -webkit-transition: all 0.2s ease-out;
+            -moz-transition: all 0.2s ease-out;
+            -ms-transition: all 0.2s ease-out;
+            -o-transition: all 0.2s ease-out;
+            transition: all 0.2s ease-out;
+            width: 15em;
+
+            &.active {
+                width: 25em;
+            }
+        }
+
+        .search-button {
+            position: absolute;
+            right: 0px;
+            top: 0px;
+            background: transparent;
+            border: none;
+            display: block;
+            width: 48px;
+            height: 100%;
+            outline: none;
+        }
+    }
+
+    .new-group-button {
+        position: absolute;
+        right: 0;
+    }
+}
+
+.content-subhead {
+    margin: 50px 0 20px 0;
+    font-weight: 300;
+    color: #888;
+}
+
+/*
+`.menu-link` represents the responsive menu toggle that shows/hides on
+small screens.
+*/
+.menu-link {
+    position: fixed;
+    display: block; /* show this only on small screens */
+    top: 0;
+    left: 0; /* "#menu width" */
+    z-index: 10;
+    width: 3em;
+    text-align: center;
+    height: auto; 
+    color: #000;
+    padding: 10px 0;
+
+    i {
+        font-size: @navFontSize+6; /* change this value to increase/decrease button size */
+    }
+
+    &:hover,
+    &:focus {
+        // background: #fff;
+    }
+}
+
+.m-nav {
+    background: #f7f7f7;
+    width: 100%;
+    padding: 10px 0;
+    text-align: right;
+    margin-right: 140px;
+
+    a {
+        color: @headerColor;
+        font-weight: 700;
+        font-size: @navFontSize;
+        text-decoration: none;
+        display: inline-block;
+        width: 4em;
+        text-align: center;
+    }
+
+    a:hover{
+        background: #f7f7f7 !important;
+        color:#439fe0 !important;
+    }
+}
+
+
+.m-menu-user {
+    margin-bottom: 10px;
+
+    h4.name {
+        margin: 0px;
+        margin-left: 0px;
+        margin-top: 14px;
+        font-weight: 700;
+        color: #fff;
+        font-size: 18px;
+    }
+
+    .avatar {
+        width: 48px;
+        height: 48px;
+    }
+}
+
+
+@media (max-width:48em) {
+
+    /* Only apply this when the window is small. Otherwise, the following
+    case results in extra padding on the left:
+        * Make the window small.
+        * Tap the menu to trigger the active state.
+        * Make the window large again.
+    */
+    #layout.active {
+        position: relative;
+        left: @menuWidth;
+    }
+
+}
+
+/*
+Hides the menu at `48em`, but modify this based on your app's needs.
+*/
+@media (min-width:48em) {
+    .content {
+        padding-left: 2em;
+        padding-right: 2em;
+    }
+
+    #layout {
+        padding-left: @menuWidth; /* left col width "#menu" */
+        left: 0;
+    }
+
+    #menu {
+        left: @menuWidth;
+    }
+
+    .m-link {
+        // position: fixed;
+        // left: 240;
+        // display: none;
+    }
+
+    #layout.active .menu-link {
+        left: @menuWidth;
+    }
+
+}

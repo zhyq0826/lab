@@ -1,0 +1,9 @@
+node_modules
+*.pyc
+*.swp
+*.log
+*.~
+*~
+.ssh
+.DS_Store
+__test__
