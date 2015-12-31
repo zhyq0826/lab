@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/vue.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <div id="example">
+        <input type="text" v-model="newTodo" v-on:keyup.enter="addTodo">
+        <ul>
+            <li v-for="todo in todos">
+                {{todo.text}}
+                <button v-on:click="removeTodo($index)">
+                    remove
+                </button>
+            </li>
+        </ul>
+    </div>
+    <script type="text/javascript">
+        new Vue({
+            el: '#example',
+            data: {
+                todos: [
+                  { text: 'Learn JavaScript' },
+                  { text: 'Learn Vue.js' },
+                  { text: 'Build Something Awesome' }
+                ]
+            },
+            methods: {
+                addTodo: function(){
+                    this.todos.push({text: this.newTodo});
+                },
+                removeTodo: function(index){
+                    this.todos.splice(index, 1)
+                }
+            }
+        })
+    </script>
+</body>
+</html>
+</html>

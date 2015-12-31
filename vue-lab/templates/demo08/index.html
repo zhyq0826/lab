@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/vue.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <div id="example">
+        <ul>
+            <li v-for="todo in todos" data-index="{{todo.id}}" v-bind:id="todo.id" >
+                <p>
+                    text: {{todo.text}}
+                </p>
+                <p>
+                    html: {{{todo.html}}}
+                </p>
+                <p>
+                    math: {{todo.id + 1}}
+                </p>
+                <p>
+                    js expresstion: {{todo.text.toUpperCase()}}
+                </p>
+                <p>
+                    filter: {{todo.text | capitalize}}
+                </p>
+                <p @click="do" :data-id="todo.id" >
+                    click me alert
+                </p>
+            </li>
+        </ul>
+    </div>
+    <script type="text/javascript">
+        new Vue({
+            el: '#example',
+            data: {
+                todos: [
+                  { text: 'learn JavaScript', id: 1, html:'<strong>1</strong>'},
+                  { text: 'learn Vue.js' , id: 2, html:'<strong>2</strong>'},
+                  { text: 'build Something Awesome', id:3, html:'<strong>3</strong>'}
+                ]
+            },
+            methods: {
+                do: function(e){
+                    alert('do Something ==> '+e.target.dataset.id);
+                }
+            }
+        })
+    </script>
+</body>
+</html>

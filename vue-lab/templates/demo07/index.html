@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/vue.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <div id="example">
+        {{message}}
+    </div>
+    
+    <script type="text/javascript">
+        new Vue({
+            el: '#example',
+            data: {
+                message: 'hello vue'
+            },
+            created: function(){
+                console.log('created');
+            },
+            beforeCompile: function(){
+                console.log('beforeCompole');
+            },
+            compiled: function(){
+                console.log('compiled');
+            },
+            ready: function(){
+                console.log('ready');
+            },
+            beforeDestroy: function(){
+                console.log('beforeDestroy');
+            },
+            destroyed: function(){
+                console.log('destroyed');
+            }
+        })
+    </script>
+</body>
+</html>
