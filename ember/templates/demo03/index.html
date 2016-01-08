@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script type="text/javascript" src="../../js/ember.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <script type="text/javascript">
+        var _get = function(){
+            var self = this.parent;
+            console.log('_get');
+            self.data();
+        }
+
+        var Ajax = Ember.Object.extend({
+            request: null,
+            data: function(){
+                console.log('data');
+            },
+            init: function(){
+                this._super();
+                var self = this;
+                var request = {
+                    parent: self,
+                    get: _get
+                };
+                Ember.set(this, 'request', request);
+            }
+        });
+
+        var ajax = Ajax.create();
+        ajax.request.get();
+
+    </script>
+</body>
+</html>

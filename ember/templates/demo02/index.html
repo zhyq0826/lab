@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script type="text/javascript" src="../../js/ember.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <script type="text/javascript">
+        var Ajax = Ember.Mixin.create({
+            ajax: function(){
+                return this.data(data);
+            },
+            say: function(data){
+                console.log('ajax say');
+                return data;
+            },
+            parent: null,
+            init: function(){
+                this._super();
+                console.log('ajax init');
+                this.set('parent', this);
+            }
+        });
+
+        var Model = Ember.Mixin.create(Ajax);
+        var Store = Ember.Service.extend(Ajax);
+
+        var MModel = Ember.Mixin.create(Model, {
+            say: function(data){
+                console.log('MModel say');
+                return data;
+            }
+        });
+
+        var Man = Ember.Object.extend(MModel, {
+            say: function(data){
+                console.log('Man say');
+                return 'man';
+            }
+        });
+
+        var Woman = Ember.Object.extend(MModel, {
+
+        });
+
+        var m = Man.create();
+        var w = Woman.create();
+        var s = Store.create();
+        console.log('m say');
+        m.say(); //Man say
+        console.log('w say');
+        w.say(); //MModel say
+        console.log('s say');
+        s.say(); // ajax say
+
+    </script>
+</body>
+</html>

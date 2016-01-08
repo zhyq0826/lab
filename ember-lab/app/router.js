@@ -6,7 +6,7 @@ var Router = Ember.Router.extend({
 });
 
 Router.map(function() {
-    this.route('admin', function(){
+    this.route('ember-easy-orm', function(){
         
     });
 });
