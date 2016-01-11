@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script type="text/javascript" src="../../js/ember.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <script type="text/javascript">
+        var Person = Ember.Mixin.create({
+            ajax: function(data){
+                return this.data(data);
+            },
+            say: function(data){
+                console.log(data);
+                return data;
+            }
+        });
+
+
+        var Man = Ember.Object.extend(Person, {
+            say: function(data){
+                console.log('Man say');
+                return 'man';
+            }
+        });
+
+        var Woman = Ember.Object.extend(Person, {
+
+        });
+
+
+        var m = Man.create();
+        var w = Woman.create();
+        m.say(); //Man say;
+        w.say(); //undefined
+
+    </script>
+</body>
+</html>
