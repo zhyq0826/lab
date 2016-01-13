@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script type="text/javascript" src="../../js/ember.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <script type="text/javascript">
+        var user = Ember.Object.create({name: 'vue', _id: 1});
+        Ember.merge(user, {name: 'react'});
+        console.log(user);
+    </script>
+</body>
+</html>

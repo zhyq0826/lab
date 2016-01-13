@@ -1,6 +1,43 @@
-<h1>admin index</h1>
+<h1>ember-easy-orm index</h1>
 {{outlet}}
 
 <div>
     {{#ui-button}}{{/ui-button}}
+</div>
+
+<h1>{{model.name}}</h1>
+<div>
+    <h1>ajax request test</h1>
+    <button {{action "storeGet" model}} >get</button>
+    <button {{action "storePost" model}} >post</button>
+    <button {{action "storePut" model}} >put</button>
+    <button {{action "storeDelete" model}} >delete</button>
+    <button {{action "storeAjaxSuccess" model}} >AjaxSuccess</button>
+    <button {{action "storeAjaxFail" model}} >AjaxFail</button>
+    <button {{action "errorRequest"}} >errorRequest</button>
+</div>
+
+
+<div>
+    <h1>model request test</h1>
+    <button {{action "modelGet" model}} >get</button>
+    <button {{action "modelPost" model}} >post</button>
+    <button {{action "modelPut" model}} >put</button>
+    <button {{action "modelDelete" model}} >delete</button>
+    <button {{action "modelAjaxSuccess" model}} >AjaxSuccess</button>
+    <button {{action "modelAjaxFail" model}} >AjaxFail</button>
+</div>
+
+<div>
+    <h1>model</h1>
+    <button {{action "create"}} >create</button>   
+    <ul>
+        {{#each model as |user| }}
+        <li>
+            {{user.name}}====>{{user.gender}}
+            <button {{action "save" user}} >save</button>
+            <button {{action "remove" user}} >delete</button>
+        </li>
+        {{/each}}
+    </ul>
 </div>

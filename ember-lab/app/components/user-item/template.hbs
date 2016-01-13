@@ -1,0 +1,11 @@
+<form action="">
+    {{reason}}
+    <input type="text" value="{{model._id}}" >
+    <input type="text" value="{{model.name}}" >
+    <input type="text" value="{{model.gender}}" >
+    <button {{ action "save"}} >save</button>
+    <button {{action "cancel"}} >cancel</button>
+    {{#if model._id}}
+        <button {{action "remove"}} >delete</button>
+    {{/if}}
+</form>

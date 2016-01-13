@@ -1,0 +1,15 @@
+<button {{action "add"}} >create</button>
+
+{{#if modalShow}}
+    {{#user-item model=selectedItem cancel=(action "cancel") success=(action "success") fail=(action "fail") }}{{/user-item}}
+{{/if}}
+
+<ul>
+    {{#each model as |item| }}
+        <li>
+            <span>{{item.name}}</span>
+            <button {{action "edit" item }} >edit</button>
+            <button {{action "remove" item }} >remove</button>
+        </li>        
+    {{/each}}
+</ul>

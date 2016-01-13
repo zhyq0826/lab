@@ -12,7 +12,9 @@ export default Ember.Object.extend(model, {
         dataType: 'json'
     },
     RESTSerializer: function(data){
-        console.log(data);
         return data;
+    },
+    saveSerializer: function(data){
+        return data.res['user'];
     }
 });

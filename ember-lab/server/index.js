@@ -32,25 +32,25 @@ module.exports = function(app) {
     app.get('/v1/user_json', function(req, res) {
         res.send([{
             _id:1,
-            name: 'name',
+            name: 'vue',
             gender: 'f'
         }, {
             _id:2,
-            name: 'name',
+            name: 'ember',
             gender: 'f'
         }, {
             _id:3,
-            name: 'name',
+            name: 'react',
             gender: 'f'
         }])
     });
 
     app.post('/v1/user_json', function(req, res) {
-        res.send({code: 0, res:{}, 'msg': 'post ok'});
+        res.send({code: 0, res:{user: {name:'hello', '_id': 1}}, 'msg': 'post ok'});
     });
 
     app.put('/v1/user_json/*', function(req, res){
-        res.send({code: 0, res:{}, 'msg': 'put ok'});
+        res.send({code: 0, res:{user: {name: 'world'}}, 'msg': 'put ok'});
     })
 
     app.delete('/v1/user_json/*', function(req, res){
