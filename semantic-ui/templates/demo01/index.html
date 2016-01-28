@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<link rel="stylesheet" href="../../css/semantic.css">
+	<script type="text/javascript" src="../../js/jquery.js" ></script>
+	<script src="../../js/semantic.js" ></script>
+</head>
+<body>
+	<div class="ui container">
+		<select name="" class="ui dropdown" id="test" multiple="" >
+			<option value="a" >a</option>
+			<option value="b" >b</option>
+			<option value="c" >c</option>
+		</select>
+	</div>
+	<button>reselected</button>
+
+	<script type="text/javascript">
+		$("#test").dropdown("set selected", []);
+		$("button").on("click", function (argument) {
+			$("#test").dropdown("set selected", ['c']);
+		})
+	</script>
+</body>
+</html>
