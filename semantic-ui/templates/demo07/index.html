@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<link rel="stylesheet" href="../../css/semantic.css">
+	<script type="text/javascript" src="../../js/jquery.js" ></script>
+	<script src="../../js/semantic.js" ></script>
+</head>
+<body>
+	<div class="ui top attached tabular menu">
+	  <a class="item" data-tab="first">First</a>
+	  <a class="item" data-tab="second">Second</a>
+	  <a class="item" data-tab="third">Third</a>
+	</div>
+	<div class="ui bottom attached tab segment" data-tab="first">
+	  First
+	</div>
+	<div class="ui bottom attached tab segment" data-tab="second">
+	  Second
+	</div>
+	<div class="ui bottom attached tab segment" data-tab="third">
+	  Third
+	</div>
+	<script type="text/javascript">
+		$('.menu .item').tab();
+	</script>
+</body>
+</html>
+

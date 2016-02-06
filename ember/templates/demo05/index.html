@@ -19,8 +19,8 @@
     <p>
         <pre>
             <code>
-              {{#x-people people=people as |c|}}
-                Hello {{p.firstName}} {{c.lastName}}
+              {{#x-people people=people as |c p|}}
+                Hello {{c.firstName}} {{c.lastName}} {{p}}
               {{/x-people}}
             </code>
         </pre>
@@ -40,6 +40,9 @@
         {{#each people as |c|}}
           <li>{{yield c 'p'}}</li>
         {{/each}}
+      </ul>
+      <ul>
+          <li>{{yield 'c' 'p'}}</li>  
       </ul>
     </script>
 
