@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script type="text/javascript" src="../../js/ember-template-compiler.js" ></script>
+    <script type="text/javascript" src="../../js/ember.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script>
+    EmberENV = {
+      FEATURES: {
+        'ember-htmlbars': true,
+        'ember-htmlbars-block-params': true
+      }
+    }
+  </script>
+</head>
+<body>
+    <script type="text/x-handlebars" data-template-name="application">
+      <h1>hello ember</h1>      
+    </script>
+      
+
+
+    <script>
+        App = Ember.Application.create({
+          LOG_TRANSITIONS: true,
+          LOG_VIEW_LOOKUPS: true
+        });
+
+        App.ApplicationController = Ember.Controller.extend({
+            people: [
+              {firstName: 'Kris', lastName: 'Selden'},
+              {firstName: 'Luke', lastName: 'Melia'},
+              {firstName: 'Formerly Alex', lastName: 'Matchneer'}
+            ]
+        });
+
+        function templateToString(template) {
+            var View = Ember.View.create({ template: template });
+            var buffer = new Ember.RenderBuffer();
+
+            view.render(buffer)
+            return buffer.string();
+        }
+
+        var aview = Ember.View.extend({
+          template: Ember.HTMLBars.compile('hello HTMLBars compie')
+        });
+
+        console.log(aview);
+        console.log(Ember.HTMLBars.compile('hello HTMLBars compie'));
+
+    </script>
+
+</body>
+</html>
