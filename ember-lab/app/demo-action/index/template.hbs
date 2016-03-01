@@ -1,0 +1,31 @@
+<h1>closure-action index</h1>
+
+<div>
+    {{demo-action/example-one count=(mut count) }}
+    {{count}}
+</div>
+
+<div>
+    <h3>
+        example-two component for mut helper and action helper
+        pass text value
+    </h3>
+    {{demo-action/example-two on-enter=(action (mut text)) }}
+    {{text}}
+</div>
+
+<div>
+    <h3>
+        example-two component for mut helper and action helper
+        pass action
+    </h3>
+    {{demo-action/example-two on-enter=(action 'pressEnter') }}
+    {{text}}
+</div>
+
+<div>
+    <h3>
+        example-three component for cloure action
+    </h3>
+    {{demo-action/example-three alert=(action "alertSome" "fist demo for cloure action")}}
+</div>
