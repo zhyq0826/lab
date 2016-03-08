@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script type="text/javascript" src="../../js/ember-template-compiler.js" ></script>
+    <script type="text/javascript" src="../../js/ember.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script>
+    EmberENV = {
+      FEATURES: {
+        'ember-htmlbars': true,
+        'ember-htmlbars-block-params': true
+      }
+    }
+  </script>
+</head>
+<body>
+    <p>
+      external value means to this object context is outside of the component
+    </p>
+    <script type="text/x-handlebars" data-template-name="application">
+        <h1>application</h1>
+        {{x-people external=value }}
+        {{x-people external='external' }}
+        {{x-people}}
+    </script>
+      
+    <script type="text/x-handlebars" data-template-name="components/x-people">
+        <h1>x component {{elementId}}</h1>
+        <button {{action "changeExternal"}} >change-x-external</button>
+    </script>
+    
+
+    <script>
+        App = Ember.Application.create({
+          LOG_TRANSITIONS: true,
+          LOG_VIEW_LOOKUPS: true
+        });
+
+        App.ApplicationController = Ember.Controller.extend({
+            people: [
+              {firstName: 'Kris', lastName: 'Selden'},
+              {firstName: 'Luke', lastName: 'Melia'},
+              {firstName: 'Formerly Alex', lastName: 'Matchneer'}
+            ],
+            actions: {
+                changeExternal: function(){
+                  this.set('value', new Date());
+                }
+            }
+        });
+
+        App.PeopleMixin = Ember.Mixin.create({
+          actions: {
+            changeExternal: function(){
+              this.attrs.external.update(new Date());
+            }
+          },
+          didInitAttrs: function(){
+            this.log('didInitAttrs');
+          },
+          didUpdateAttrs: function(){
+            this.log('didUpdateAttrs');
+          },
+          log: function(action){
+            console.log(this.elementId+'==>'+action);
+            console.log('external=>' + this.external);
+            console.log('external attrs=>' + this.attrs.external);
+            console.log('internal=>' + this.internal);
+            console.log('internal attrs=>' + this.attrs.internal);
+          },
+        })
+
+        App.XPeopleComponent = Ember.Component.extend(App.PeopleMixin,{
+          internal: 'internal',
+        });
+
+    </script>
+
+</body>
+</html>

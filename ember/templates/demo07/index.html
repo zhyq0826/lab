@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script type="text/javascript" src="../../js/ember-template-compiler.js" ></script>
+    <script type="text/javascript" src="../../js/ember.js" ></script>
+    <script type="text/javascript" src="../../js/highlight.pack.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script>
+    EmberENV = {
+      FEATURES: {
+        'ember-htmlbars': true,
+        'ember-htmlbars-block-params': true
+      }
+    }
+  </script>
+</head>
+<body>
+    <script type="text/x-handlebars" data-template-name="application">
+      <h1>hello ember</h1>      
+    </script>
+
+    <script>
+        var s = `{{#ui-button theme="compact" action="clickMe" }}
+                    <i class="icon heart">heart</i>
+                {{/ui-button}}`;
+
+        hljs.configure({useBR: true});
+        var v  = Ember.Handlebars.Utils.escapeExpression(s)
+        v = hljs.fixMarkup(v);
+        window.document.body.innerHTML = Ember.String.htmlSafe(v);
+    </script>
+
+</body>
+</html>
