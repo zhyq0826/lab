@@ -6,7 +6,7 @@
  *            Portions Copyright 2008-2011 Apple Inc. All rights reserved.
  * @license   Licensed under MIT license
  *            See https://raw.github.com/emberjs/ember.js/master/LICENSE
- * @version   2.2.0
+ * @version   2.3.1
  */
 
 var enifed, requireModule, require, requirejs, Ember;
@@ -43,6 +43,15 @@ var mainContext = this;
     requirejs = require = requireModule = function(name) {
       return internalRequire(name, null);
     }
+    require['default'] = require;
+
+    function missingModule(name, referrerName) {
+      if (referrerName) {
+        throw new Error('Could not find module ' + name + ' required by: ' + referrerName);
+      } else {
+        throw new Error('Could not find module ' + name);
+      }
+    }
 
     function internalRequire(name, referrerName) {
       var exports = seen[name];
@@ -54,24 +63,22 @@ var mainContext = this;
       exports = seen[name] = {};
 
       if (!registry[name]) {
-        if (referrerName) {
-          throw new Error('Could not find module ' + name + ' required by: ' + referrerName);
-        } else {
-          throw new Error('Could not find module ' + name);
-        }
+        missingModule(name, referrerName);
       }
 
       var mod = registry[name];
       var deps = mod.deps;
       var callback = mod.callback;
-      var reified = [];
       var length = deps.length;
+      var reified = new Array(length);;
 
       for (var i = 0; i < length; i++) {
         if (deps[i] === 'exports') {
-          reified.push(exports);
+          reified[i] = exports;
+        } else if (deps[i] === 'require') {
+          reified[i] = require;
         } else {
-          reified.push(internalRequire(deps[i], name));
+          reified[i] = internalRequire(deps[i], name);
         }
       }
 
@@ -1604,7 +1611,7 @@ enifed('ember-debug', ['exports', 'ember-metal/core', 'ember-metal/debug', 'embe
   _emberMetalDebug.setDebugFunction('warn', _emberDebugWarn.default);
 
   /**
-    Will call `Ember.warn()` if ENABLE_ALL_FEATURES, ENABLE_OPTIONAL_FEATURES, or
+    Will call `Ember.warn()` if ENABLE_OPTIONAL_FEATURES or
     any specific FEATURES flag is truthy.
   
     This method is called automatically in debug canary builds.
@@ -1616,7 +1623,6 @@ enifed('ember-debug', ['exports', 'ember-metal/core', 'ember-metal/debug', 'embe
 
   function _warnIfUsingStrippedFeatureFlags(FEATURES, featuresWereStripped) {
     if (featuresWereStripped) {
-      _emberMetalDebug.warn('Ember.ENV.ENABLE_ALL_FEATURES is only available in canary builds.', !_emberMetalCore.default.ENV.ENABLE_ALL_FEATURES, { id: 'ember-debug.feature-flag-with-features-stripped' });
       _emberMetalDebug.warn('Ember.ENV.ENABLE_OPTIONAL_FEATURES is only available in canary builds.', !_emberMetalCore.default.ENV.ENABLE_OPTIONAL_FEATURES, { id: 'ember-debug.feature-flag-with-features-stripped' });
 
       for (var key in FEATURES) {
@@ -2507,7 +2513,7 @@ enifed('ember-metal/chains', ['exports', 'ember-metal/debug', 'ember-metal/prope
       return;
     }
 
-    var m = obj.__ember_meta__;
+    var m = _emberMetalMeta.peekMeta(obj);
 
     if (!m || !m.readableChainWatchers()) {
       return;
@@ -2555,7 +2561,7 @@ enifed('ember-metal/chains', ['exports', 'ember-metal/debug', 'ember-metal/prope
       return;
     }
 
-    var meta = obj['__ember_meta__'];
+    var meta = _emberMetalMeta.peekMeta(obj);
 
     // check if object meant only to be a prototype
     if (meta && meta.proto === obj) {
@@ -2761,7 +2767,7 @@ enifed('ember-metal/chains', ['exports', 'ember-metal/debug', 'ember-metal/prope
 
   function finishChains(obj) {
     // We only create meta if we really have to
-    var m = obj.__ember_meta__;
+    var m = _emberMetalMeta.peekMeta(obj);
     if (m) {
       m = _emberMetalMeta.meta(obj);
 
@@ -3020,7 +3026,6 @@ enifed('ember-metal/computed', ['exports', 'ember-metal/debug', 'ember-metal/pro
     var args;
 
     var addArg = function (property) {
-      _emberMetalDebug.assert('Depending on arrays using a dependent key ending with `@each` is no longer supported. ' + ('Please refactor from `Ember.computed(\'' + property + '\', function() {});` to `Ember.computed(\'' + property.slice(0, -6) + '.[]\', function() {})`.'), property.slice(-5) !== '@each');
       args.push(property);
     };
 
@@ -3077,7 +3082,7 @@ enifed('ember-metal/computed', ['exports', 'ember-metal/debug', 'ember-metal/pro
     }
 
     // don't create objects just to invalidate
-    var meta = obj.__ember_meta__;
+    var meta = _emberMetalMeta.peekMeta(obj);
     if (!meta || meta.source !== obj) {
       return;
     }
@@ -3301,22 +3306,20 @@ enifed('ember-metal/computed', ['exports', 'ember-metal/debug', 'ember-metal/pro
     computed property function. You can use this helper to define properties
     with mixins or via `Ember.defineProperty()`.
   
-    If you pass function as argument - it will be used as getter.
-    You can pass hash with two functions - instead of single function - as argument to provide both getter and setter.
-  
-    The `get` function should accept two parameters, `key` and `value`. If `value` is not
-    undefined you should set the `value` first. In either case return the
-    current value of the property.
-  
-    A computed property defined in this way might look like this:
+    If you pass a function as an argument, it will be used as a getter. A computed
+    property defined in this way might look like this:
   
     ```js
     let Person = Ember.Object.extend({
-      firstName: 'Betty',
-      lastName: 'Jones',
+      init() {
+        this._super(...arguments);
+  
+        this.firstName = 'Betty';
+        this.lastName = 'Jones';
+      },
   
       fullName: Ember.computed('firstName', 'lastName', function() {
-        return this.get('firstName') + ' ' + this.get('lastName');
+        return `${this.get('firstName')} ${this.get('lastName')}`;
       })
     });
   
@@ -3328,14 +3331,45 @@ enifed('ember-metal/computed', ['exports', 'ember-metal/debug', 'ember-metal/pro
     client.get('fullName'); // 'Betty Fuller'
     ```
   
+    You can pass a hash with two functions, `get` and `set`, as an
+    argument to provide both a getter and setter:
+  
+    ```js
+    let Person = Ember.Object.extend({
+      init() {
+        this._super(...arguments);
+  
+        this.firstName = 'Betty';
+        this.lastName = 'Jones';
+      },
+  
+      fullName: Ember.computed({
+        get(key) {
+          return `${this.get('firstName')} ${this.get('lastName')}`;
+        },
+        set(key, value) {
+          let [firstName, lastName] = value.split(/\s+/);
+          this.setProperties({ firstName, lastName });
+          return value;
+        }
+      });
+    })
+  
+    let client = Person.create();
+    client.get('firstName'); // 'Betty'
+  
+    client.set('fullName', 'Carroll Fuller');
+    client.get('firstName'); // 'Carroll'
+    ```
+  
+    The `set` function should accept two parameters, `key` and `value`. The value
+    returned from `set` will be the new value of the property.
+  
     _Note: This is the preferred way to define computed properties when writing third-party
     libraries that depend on or use Ember, since there is no guarantee that the user
-    will have prototype extensions enabled._
+    will have [prototype Extensions](http://emberjs.com/guides/configuring-ember/disabling-prototype-extensions/) enabled._
   
-    You might use this method if you disabled
-    [Prototype Extensions](http://emberjs.com/guides/configuring-ember/disabling-prototype-extensions/).
-    The alternative syntax might look like this
-    (if prototype extensions are enabled, which is the default behavior):
+    The alternative syntax, with prototype extensions, might look like:
   
     ```js
     fullName() {
@@ -3385,7 +3419,7 @@ enifed('ember-metal/computed', ['exports', 'ember-metal/debug', 'ember-metal/pro
     @public
   */
   function cacheFor(obj, key) {
-    var meta = obj.__ember_meta__;
+    var meta = _emberMetalMeta.peekMeta(obj);
     var cache = meta && meta.source === obj && meta.readableCache();
     var ret = cache && cache[key];
 
@@ -3419,7 +3453,7 @@ enifed('ember-metal/computed', ['exports', 'ember-metal/debug', 'ember-metal/pro
   exports.computed = computed;
   exports.cacheFor = cacheFor;
 });
-enifed('ember-metal/computed_macros', ['exports', 'ember-metal/core', 'ember-metal/debug', 'ember-metal/property_get', 'ember-metal/property_set', 'ember-metal/computed', 'ember-metal/is_empty', 'ember-metal/is_none', 'ember-metal/alias'], function (exports, _emberMetalCore, _emberMetalDebug, _emberMetalProperty_get, _emberMetalProperty_set, _emberMetalComputed, _emberMetalIs_empty, _emberMetalIs_none, _emberMetalAlias) {
+enifed('ember-metal/computed_macros', ['exports', 'ember-metal/debug', 'ember-metal/property_get', 'ember-metal/property_set', 'ember-metal/computed', 'ember-metal/is_empty', 'ember-metal/is_none', 'ember-metal/alias'], function (exports, _emberMetalDebug, _emberMetalProperty_get, _emberMetalProperty_set, _emberMetalComputed, _emberMetalIs_empty, _emberMetalIs_none, _emberMetalAlias) {
   'use strict';
 
   exports.empty = empty;
@@ -3926,47 +3960,6 @@ enifed('ember-metal/computed_macros', ['exports', 'ember-metal/core', 'ember-met
 
   exports.or = or;
   /**
-    A computed property that returns the array of values
-    for the provided dependent properties.
-  
-    Example
-  
-    ```javascript
-    var Hamster = Ember.Object.extend({
-      clothes: Ember.computed.collect('hat', 'shirt')
-    });
-  
-    var hamster = Hamster.create();
-  
-    hamster.get('clothes'); // [null, null]
-    hamster.set('hat', 'Camp Hat');
-    hamster.set('shirt', 'Camp Shirt');
-    hamster.get('clothes'); // ['Camp Hat', 'Camp Shirt']
-    ```
-  
-    @method collect
-    @for Ember.computed
-    @param {String} dependentKey*
-    @return {Ember.ComputedProperty} computed property which maps
-    values of all passed in properties to an array.
-    @public
-  */
-  var collect = generateComputedWithProperties(function (properties) {
-    var res = _emberMetalCore.default.A();
-    for (var key in properties) {
-      if (properties.hasOwnProperty(key)) {
-        if (_emberMetalIs_none.default(properties[key])) {
-          res.push(null);
-        } else {
-          res.push(properties[key]);
-        }
-      }
-    }
-    return res;
-  });
-
-  exports.collect = collect;
-  /**
     Creates a new property that is an alias for another property
     on an object. Calls to `get` or `set` this property behave as
     though they were called on the original property.
@@ -4136,7 +4129,7 @@ enifed('ember-metal/core', ['exports'], function (exports) {
   
     @class Ember
     @static
-    @version 2.2.0
+    @version 2.3.1
     @public
   */
 
@@ -4180,11 +4173,11 @@ enifed('ember-metal/core', ['exports'], function (exports) {
   
     @property VERSION
     @type String
-    @default '2.2.0'
+    @default '2.3.1'
     @static
     @public
   */
-  Ember.VERSION = '2.2.0';
+  Ember.VERSION = '2.3.1';
 
   /**
     The hash of environment variables used to control various configuration
@@ -4209,12 +4202,12 @@ enifed('ember-metal/core', ['exports'], function (exports) {
     Ember.ENV = {};
   }
 
-  Ember.config = Ember.config || {};
-
-  // We disable the RANGE API by default for performance reasons
-  if ('undefined' === typeof Ember.ENV.DISABLE_RANGE_API) {
-    Ember.ENV.DISABLE_RANGE_API = true;
+  // ENABLE_ALL_FEATURES was documented, but you can't actually enable non optional features.
+  if (Ember.ENV.ENABLE_ALL_FEATURES) {
+    Ember.ENV.ENABLE_OPTIONAL_FEATURES = Ember.ENV.ENABLE_ALL_FEATURES;
   }
+
+  Ember.config = Ember.config || {};
 
   // ..........................................................
   // BOOTSTRAP
@@ -4255,17 +4248,6 @@ enifed('ember-metal/core', ['exports'], function (exports) {
     @public
   */
   Ember.LOG_STACKTRACE_ON_DEPRECATION = Ember.ENV.LOG_STACKTRACE_ON_DEPRECATION !== false;
-
-  /**
-    The `SHIM_ES5` property, when true, tells Ember to add ECMAScript 5 Array
-    shims to older browsers.
-  
-    @property SHIM_ES5
-    @type Boolean
-    @default Ember.EXTEND_PROTOTYPES
-    @public
-  */
-  Ember.SHIM_ES5 = Ember.ENV.SHIM_ES5 === false ? false : Ember.EXTEND_PROTOTYPES;
 
   /**
     The `LOG_VERSION` property, when true, tells Ember to log versions of all
@@ -4639,7 +4621,7 @@ enifed('ember-metal/events', ['exports', 'ember-metal/debug', 'ember-metal/utils
   }
 
   function accumulateListeners(obj, eventName, otherActions) {
-    var meta = obj['__ember_meta__'];
+    var meta = _emberMetalMeta.peekMeta(obj);
     if (!meta) {
       return;
     }
@@ -4799,7 +4781,7 @@ enifed('ember-metal/events', ['exports', 'ember-metal/debug', 'ember-metal/utils
 
   function sendEvent(obj, eventName, params, actions) {
     if (!actions) {
-      var meta = obj['__ember_meta__'];
+      var meta = _emberMetalMeta.peekMeta(obj);
       actions = meta && meta.matchingListeners(eventName);
     }
 
@@ -4851,7 +4833,7 @@ enifed('ember-metal/events', ['exports', 'ember-metal/debug', 'ember-metal/utils
   */
 
   function hasListeners(obj, eventName) {
-    var meta = obj['__ember_meta__'];
+    var meta = _emberMetalMeta.peekMeta(obj);
     if (!meta) {
       return false;
     }
@@ -4868,7 +4850,7 @@ enifed('ember-metal/events', ['exports', 'ember-metal/debug', 'ember-metal/utils
 
   function listenersFor(obj, eventName) {
     var ret = [];
-    var meta = obj['__ember_meta__'];
+    var meta = _emberMetalMeta.peekMeta(obj);
     var actions = meta && meta.matchingListeners(eventName);
 
     if (!actions) {
@@ -4932,6 +4914,8 @@ enifed('ember-metal/expand_properties', ['exports', 'ember-metal/error'], functi
 
   var SPLIT_REGEX = /\{|\}/;
 
+  var END_WITH_EACH_REGEX = /\.@each$/;
+
   /**
     Expands `pattern`, invoking `callback` for each expansion.
   
@@ -4976,10 +4960,10 @@ enifed('ember-metal/expand_properties', ['exports', 'ember-metal/error'], functi
       });
 
       properties.forEach(function (property) {
-        callback(property.join(''));
+        callback(property.join('').replace(END_WITH_EACH_REGEX, '.[]'));
       });
     } else {
-      callback(pattern);
+      callback(pattern.replace(END_WITH_EACH_REGEX, '.[]'));
     }
   }
 
@@ -5024,7 +5008,6 @@ enifed('ember-metal/features', ['exports', 'ember-metal/core', 'ember-metal/assi
   
     You can define the following configuration options:
   
-    * `EmberENV.ENABLE_ALL_FEATURES` - force all features to be enabled.
     * `EmberENV.ENABLE_OPTIONAL_FEATURES` - enable any features that have not been explicitly
       enabled/disabled.
   
@@ -5039,9 +5022,7 @@ enifed('ember-metal/features', ['exports', 'ember-metal/core', 'ember-metal/assi
   function isEnabled(feature) {
     var featureValue = FEATURES[feature];
 
-    if (_emberMetalCore.default.ENV.ENABLE_ALL_FEATURES) {
-      return true;
-    } else if (featureValue === true || featureValue === false || featureValue === undefined) {
+    if (featureValue === true || featureValue === false || featureValue === undefined) {
       return featureValue;
     } else if (_emberMetalCore.default.ENV.ENABLE_OPTIONAL_FEATURES) {
       return true;
@@ -5094,7 +5075,7 @@ enifed('ember-metal/get_properties', ['exports', 'ember-metal/property_get'], fu
     return ret;
   }
 });
-enifed('ember-metal/injected_property', ['exports', 'ember-metal/debug', 'ember-metal/computed', 'ember-metal/alias', 'ember-metal/properties'], function (exports, _emberMetalDebug, _emberMetalComputed, _emberMetalAlias, _emberMetalProperties) {
+enifed('ember-metal/injected_property', ['exports', 'ember-metal/debug', 'ember-metal/computed', 'ember-metal/alias', 'ember-metal/properties', 'container/owner'], function (exports, _emberMetalDebug, _emberMetalComputed, _emberMetalAlias, _emberMetalProperties, _containerOwner) {
   'use strict';
 
   /**
@@ -5118,11 +5099,12 @@ enifed('ember-metal/injected_property', ['exports', 'ember-metal/debug', 'ember-
 
   function injectedPropertyGet(keyName) {
     var desc = this[keyName];
+    var owner = _containerOwner.getOwner(this);
 
     _emberMetalDebug.assert('InjectedProperties should be defined with the Ember.inject computed property macros.', desc && desc.isDescriptor && desc.type);
-    _emberMetalDebug.assert('Attempting to lookup an injected property on an object without a container, ensure that the object was instantiated via a container.', this.container);
+    _emberMetalDebug.assert('Attempting to lookup an injected property on an object without a container, ensure that the object was instantiated via a container.', owner);
 
-    return this.container.lookup(desc.type + ':' + (desc.name || keyName));
+    return owner.lookup(desc.type + ':' + (desc.name || keyName));
   }
 
   InjectedProperty.prototype = Object.create(_emberMetalProperties.Descriptor.prototype);
@@ -5445,6 +5427,8 @@ enifed('ember-metal/is_empty', ['exports', 'ember-metal/property_get', 'ember-me
     Ember.isEmpty({});              // false
     Ember.isEmpty('Adam Hawkins');  // false
     Ember.isEmpty([0,1,2]);         // false
+    Ember.isEmpty('\n\t');          // false
+    Ember.isEmpty('  ');            // false
     ```
   
     @method isEmpty
@@ -6305,6 +6289,8 @@ enifed('ember-metal/meta', ['exports', 'ember-metal/meta_listeners', 'ember-meta
   // https://bugs.webkit.org/show_bug.cgi?id=138038 is fixed
 
   exports.meta = meta;
+  exports.peekMeta = peekMeta;
+  exports.deleteMeta = deleteMeta;
 
   /**
   @module ember-metal
@@ -6343,6 +6329,7 @@ enifed('ember-metal/meta', ['exports', 'ember-metal/meta_listeners', 'ember-meta
   };
 
   var memberNames = Object.keys(members);
+  var META_FIELD = '__ember_meta__';
 
   function Meta(obj, parentMeta) {
     this._cache = undefined;
@@ -6601,14 +6588,25 @@ enifed('ember-metal/meta', ['exports', 'ember-metal/meta_listeners', 'ember-meta
 
   exports.META_DESC = META_DESC;
   var EMBER_META_PROPERTY = {
-    name: '__ember_meta__',
+    name: META_FIELD,
     descriptor: META_DESC
   };
 
-  // Placeholder for non-writable metas.
-  var EMPTY_META = new Meta(null);
+  // choose the one appropriate for given platform
+  var setMeta = function (obj, meta) {
+    // if `null` already, just set it to the new value
+    // otherwise define property first
+    if (obj[META_FIELD] !== null) {
+      if (obj.__defineNonEnumerable) {
+        obj.__defineNonEnumerable(EMBER_META_PROPERTY);
+      } else {
+        Object.defineProperty(obj, META_FIELD, META_DESC);
+      }
+    }
 
-  exports.EMPTY_META = EMPTY_META;
+    obj[META_FIELD] = meta;
+  };
+
   /**
     Retrieves the meta hash for an object. If `writable` is true ensures the
     hash is writable for this object as well.
@@ -6628,34 +6626,32 @@ enifed('ember-metal/meta', ['exports', 'ember-metal/meta_listeners', 'ember-meta
     @return {Object} the meta hash for an object
   */
 
-  function meta(obj, writable) {
-    var ret = obj.__ember_meta__;
-    if (writable === false) {
-      return ret || EMPTY_META;
-    }
+  function meta(obj) {
+    var maybeMeta = peekMeta(obj);
+    var parent = undefined;
 
-    if (ret && ret.source === obj) {
-      return ret;
-    }
-
-    if (!ret) {
-      ret = new Meta(obj);
-    } else {
-      ret = new Meta(obj, ret);
-    }
-
-    // if `null` already, just set it to the new value
-    // otherwise define property first
-    if (obj.__ember_meta__ !== null) {
-      if (obj.__defineNonEnumerable) {
-        obj.__defineNonEnumerable(EMBER_META_PROPERTY);
-      } else {
-        Object.defineProperty(obj, '__ember_meta__', META_DESC);
+    // remove this code, in-favor of explicit parent
+    if (maybeMeta) {
+      if (maybeMeta.source === obj) {
+        return maybeMeta;
       }
+      parent = maybeMeta;
     }
-    obj.__ember_meta__ = ret;
 
-    return ret;
+    var newMeta = new Meta(obj, parent);
+    setMeta(obj, newMeta);
+    return newMeta;
+  }
+
+  function peekMeta(obj) {
+    return obj[META_FIELD];
+  }
+
+  function deleteMeta(obj) {
+    if (typeof obj[META_FIELD] !== 'object') {
+      return;
+    }
+    obj[META_FIELD] = null;
   }
 });
 enifed('ember-metal/meta_listeners', ['exports'], function (exports) {
@@ -6840,13 +6836,13 @@ enifed('ember-metal/mixin', ['exports', 'ember-metal/core', 'ember-metal/error',
   @module ember
   @submodule ember-metal
   */
-
   exports.mixin = mixin;
   exports.default = Mixin;
   exports.required = required;
   exports.aliasMethod = aliasMethod;
   exports.observer = observer;
   exports._immediateObserver = _immediateObserver;
+  exports._beforeObserver = _beforeObserver;
 
   function ROOT() {}
   ROOT.__hasSuper = false;
@@ -7170,11 +7166,13 @@ enifed('ember-metal/mixin', ['exports', 'ember-metal/core', 'ember-metal/error',
     var prev = obj[key];
 
     if ('function' === typeof prev) {
+      updateObserversAndListeners(obj, key, prev, '__ember_observesBefore__', _emberMetalObserver._removeBeforeObserver);
       updateObserversAndListeners(obj, key, prev, '__ember_observes__', _emberMetalObserver.removeObserver);
       updateObserversAndListeners(obj, key, prev, '__ember_listens__', _emberMetalEvents.removeListener);
     }
 
     if ('function' === typeof observerOrListener) {
+      updateObserversAndListeners(obj, key, observerOrListener, '__ember_observesBefore__', _emberMetalObserver._addBeforeObserver);
       updateObserversAndListeners(obj, key, observerOrListener, '__ember_observes__', _emberMetalObserver.addObserver);
       updateObserversAndListeners(obj, key, observerOrListener, '__ember_listens__', _emberMetalEvents.addListener);
     }
@@ -7330,6 +7328,10 @@ enifed('ember-metal/mixin', ['exports', 'ember-metal/core', 'ember-metal/error',
       this.mixins = undefined;
     }
     this.ownerConstructor = undefined;
+    this._without = undefined;
+    this[_emberMetalUtils.GUID_KEY] = null;
+    this[_emberMetalUtils.GUID_KEY + '_name'] = null;
+    _emberMetalDebug.debugSeal(this);
   }
 
   Mixin._apply = applyMixin;
@@ -7412,6 +7414,10 @@ enifed('ember-metal/mixin', ['exports', 'ember-metal/core', 'ember-metal/error',
     return applyMixin(obj, [this], true);
   };
 
+  MixinPrototype.toString = function Mixin_toString() {
+    return '(unknown mixin)';
+  };
+
   function _detect(curMixin, targetMixin, seen) {
     var guid = _emberMetalUtils.guidFor(curMixin);
 
@@ -7446,7 +7452,7 @@ enifed('ember-metal/mixin', ['exports', 'ember-metal/core', 'ember-metal/error',
     if (obj instanceof Mixin) {
       return _detect(obj, this, {});
     }
-    var m = obj.__ember_meta__;
+    var m = _emberMetalMeta.peekMeta(obj);
     if (!m) {
       return false;
     }
@@ -7497,10 +7503,12 @@ enifed('ember-metal/mixin', ['exports', 'ember-metal/core', 'ember-metal/error',
     return ret;
   };
 
+  _emberMetalDebug.debugSeal(MixinPrototype);
+
   // returns the mixins currently applied to the specified object
   // TODO: Make Ember.mixin
   Mixin.mixins = function (obj) {
-    var m = obj['__ember_meta__'];
+    var m = _emberMetalMeta.peekMeta(obj);
     var ret = [];
     if (!m) {
       return ret;
@@ -7591,7 +7599,7 @@ enifed('ember-metal/mixin', ['exports', 'ember-metal/core', 'ember-metal/error',
     @param {String} propertyNames*
     @param {Function} func
     @return func
-    @private
+    @public
   */
 
   function observer() {
@@ -7603,8 +7611,6 @@ enifed('ember-metal/mixin', ['exports', 'ember-metal/core', 'ember-metal/error',
     var paths;
 
     var addWatchedProperty = function (path) {
-      _emberMetalDebug.assert('Depending on arrays using a dependent key ending with `@each` is no longer supported. ' + ('Please refactor from `Ember.observer(\'' + path + '\', function() {});` to `Ember.observer(\'' + path.slice(0, -6) + '.[]\', function() {})`.'), path.slice(-5) !== '@each');
-
       paths.push(path);
     };
     var _paths = args.slice(0, -1);
@@ -7666,6 +7672,82 @@ enifed('ember-metal/mixin', ['exports', 'ember-metal/core', 'ember-metal/error',
     }
 
     return observer.apply(this, arguments);
+  }
+
+  /**
+    When observers fire, they are called with the arguments `obj`, `keyName`.
+  
+    Note, `@each.property` observer is called per each add or replace of an element
+    and it's not called with a specific enumeration item.
+  
+    A `_beforeObserver` fires before a property changes.
+  
+    A `_beforeObserver` is an alternative form of `.observesBefore()`.
+  
+    ```javascript
+    App.PersonView = Ember.View.extend({
+      friends: [{ name: 'Tom' }, { name: 'Stefan' }, { name: 'Kris' }],
+  
+      valueDidChange: Ember.observer('content.value', function(obj, keyName) {
+          // only run if updating a value already in the DOM
+          if (this.get('state') === 'inDOM') {
+            var color = obj.get(keyName) > this.changingFrom ? 'green' : 'red';
+            // logic
+          }
+      }),
+  
+      friendsDidChange: Ember.observer('friends.@each.name', function(obj, keyName) {
+        // some logic
+        // obj.get(keyName) returns friends array
+      })
+    });
+    ```
+  
+    Also available as `Function.prototype.observesBefore` if prototype extensions are
+    enabled.
+  
+    @method beforeObserver
+    @for Ember
+    @param {String} propertyNames*
+    @param {Function} func
+    @return func
+    @deprecated
+    @private
+  */
+
+  function _beforeObserver() {
+    for (var _len5 = arguments.length, args = Array(_len5), _key5 = 0; _key5 < _len5; _key5++) {
+      args[_key5] = arguments[_key5];
+    }
+
+    var func = args.slice(-1)[0];
+    var paths;
+
+    var addWatchedProperty = function (path) {
+      paths.push(path);
+    };
+
+    var _paths = args.slice(0, -1);
+
+    if (typeof func !== 'function') {
+      // revert to old, soft-deprecated argument ordering
+
+      func = args[0];
+      _paths = args.slice(1);
+    }
+
+    paths = [];
+
+    for (var i = 0; i < _paths.length; ++i) {
+      _emberMetalExpand_properties.default(_paths[i], addWatchedProperty);
+    }
+
+    if (typeof func !== 'function') {
+      throw new _emberMetalCore.default.Error('Ember.beforeObserver called without a function');
+    }
+
+    func.__ember_observesBefore__ = paths;
+    return func;
   }
 
   exports.IS_BINDING = IS_BINDING;
@@ -8100,10 +8182,10 @@ enifed('ember-metal/properties', ['exports', 'ember-metal/debug', 'ember-metal/f
     return this;
   }
 });
-enifed('ember-metal/property_events', ['exports', 'ember-metal/utils', 'ember-metal/events', 'ember-metal/observer_set'], function (exports, _emberMetalUtils, _emberMetalEvents, _emberMetalObserver_set) {
+enifed('ember-metal/property_events', ['exports', 'ember-metal/utils', 'ember-metal/meta', 'ember-metal/events', 'ember-metal/observer_set', 'ember-metal/symbol'], function (exports, _emberMetalUtils, _emberMetalMeta, _emberMetalEvents, _emberMetalObserver_set, _emberMetalSymbol) {
   'use strict';
 
-  var PROPERTY_DID_CHANGE = _emberMetalUtils.symbol('PROPERTY_DID_CHANGE');
+  var PROPERTY_DID_CHANGE = _emberMetalSymbol.default('PROPERTY_DID_CHANGE');
 
   exports.PROPERTY_DID_CHANGE = PROPERTY_DID_CHANGE;
   var beforeObserverSet = new _emberMetalObserver_set.default();
@@ -8131,7 +8213,7 @@ enifed('ember-metal/property_events', ['exports', 'ember-metal/utils', 'ember-me
     @private
   */
   function propertyWillChange(obj, keyName) {
-    var m = obj['__ember_meta__'];
+    var m = _emberMetalMeta.peekMeta(obj);
     var watching = m && m.peekWatching(keyName) > 0 || keyName === 'length';
     var proto = m && m.proto;
     var possibleDesc = obj[keyName];
@@ -8171,7 +8253,7 @@ enifed('ember-metal/property_events', ['exports', 'ember-metal/utils', 'ember-me
     @private
   */
   function propertyDidChange(obj, keyName) {
-    var m = obj['__ember_meta__'];
+    var m = _emberMetalMeta.peekMeta(obj);
     var watching = m && m.peekWatching(keyName) > 0 || keyName === 'length';
     var proto = m && m.proto;
     var possibleDesc = obj[keyName];
@@ -8383,7 +8465,7 @@ enifed('ember-metal/property_events', ['exports', 'ember-metal/utils', 'ember-me
   exports.endPropertyChanges = endPropertyChanges;
   exports.changeProperties = changeProperties;
 });
-enifed('ember-metal/property_get', ['exports', 'ember-metal/core', 'ember-metal/debug', 'ember-metal/features', 'ember-metal/error', 'ember-metal/path_cache'], function (exports, _emberMetalCore, _emberMetalDebug, _emberMetalFeatures, _emberMetalError, _emberMetalPath_cache) {
+enifed('ember-metal/property_get', ['exports', 'ember-metal/core', 'ember-metal/debug', 'ember-metal/features', 'ember-metal/error', 'ember-metal/path_cache', 'ember-metal/meta'], function (exports, _emberMetalCore, _emberMetalDebug, _emberMetalFeatures, _emberMetalError, _emberMetalPath_cache, _emberMetalMeta) {
   /**
   @module ember-metal
   */
@@ -8441,9 +8523,9 @@ enifed('ember-metal/property_get', ['exports', 'ember-metal/core', 'ember-metal/
       return obj;
     }
 
-    var meta = obj['__ember_meta__'];
-    var possibleDesc = obj[keyName];
-    var desc = possibleDesc !== null && typeof possibleDesc === 'object' && possibleDesc.isDescriptor ? possibleDesc : undefined;
+    var meta = _emberMetalMeta.peekMeta(obj);
+    var value = obj[keyName];
+    var desc = value !== null && typeof value === 'object' && value.isDescriptor ? value : undefined;
     var ret;
 
     if (desc === undefined && _emberMetalPath_cache.isPath(keyName)) {
@@ -8456,7 +8538,7 @@ enifed('ember-metal/property_get', ['exports', 'ember-metal/core', 'ember-metal/
       if (meta && meta.peekWatching(keyName) > 0) {
         ret = meta.peekValues(keyName);
       } else {
-        ret = obj[keyName];
+        ret = value;
       }
 
       if (ret === undefined && 'object' === typeof obj && !(keyName in obj) && 'function' === typeof obj.unknownProperty) {
@@ -8540,6 +8622,23 @@ enifed('ember-metal/property_get', ['exports', 'ember-metal/core', 'ember-metal/
     return root;
   }
 
+  /**
+    Retrieves the value of a property from an Object, or a default value in the
+    case that the property returns `undefined`.
+  
+    ```javascript
+    Ember.getWithDefault(person, 'lastName', 'Doe');
+    ```
+  
+    @method getWithDefault
+    @for Ember
+    @param {Object} obj The object to retrieve from.
+    @param {String} keyName The name of the property to retrieve
+    @param {Object} defaultValue The value to return if the property value is undefined
+    @return {Object} The property value or the defaultValue.
+    @public
+  */
+
   function getWithDefault(root, key, defaultValue) {
     var value = get(root, key);
 
@@ -8551,7 +8650,7 @@ enifed('ember-metal/property_get', ['exports', 'ember-metal/core', 'ember-metal/
 
   exports.default = get;
 });
-enifed('ember-metal/property_set', ['exports', 'ember-metal/debug', 'ember-metal/features', 'ember-metal/property_get', 'ember-metal/property_events', 'ember-metal/properties', 'ember-metal/error', 'ember-metal/path_cache'], function (exports, _emberMetalDebug, _emberMetalFeatures, _emberMetalProperty_get, _emberMetalProperty_events, _emberMetalProperties, _emberMetalError, _emberMetalPath_cache) {
+enifed('ember-metal/property_set', ['exports', 'ember-metal/debug', 'ember-metal/features', 'ember-metal/property_get', 'ember-metal/property_events', 'ember-metal/properties', 'ember-metal/error', 'ember-metal/path_cache', 'ember-metal/meta'], function (exports, _emberMetalDebug, _emberMetalFeatures, _emberMetalProperty_get, _emberMetalProperty_events, _emberMetalProperties, _emberMetalError, _emberMetalPath_cache, _emberMetalMeta) {
   'use strict';
 
   exports.set = set;
@@ -8580,7 +8679,7 @@ enifed('ember-metal/property_set', ['exports', 'ember-metal/debug', 'ember-metal
 
     var meta, possibleDesc, desc;
     if (obj) {
-      meta = obj['__ember_meta__'];
+      meta = _emberMetalMeta.peekMeta(obj);
       possibleDesc = obj[keyName];
       desc = possibleDesc !== null && typeof possibleDesc === 'object' && possibleDesc.isDescriptor ? possibleDesc : undefined;
     }
@@ -9231,7 +9330,7 @@ enifed('ember-metal/run_loop', ['exports', 'ember-metal/core', 'ember-metal/debu
 
   /**
     Cancels a scheduled item. Must be a value returned by `run.later()`,
-    `run.once()`, `run.next()`, `run.debounce()`, or
+    `run.once()`, `run.scheduleOnce()`, `run.next()`, `run.debounce()`, or
     `run.throttle()`.
   
     ```javascript
@@ -9246,6 +9345,12 @@ enifed('ember-metal/run_loop', ['exports', 'ember-metal/core', 'ember-metal/debu
     }, 500);
   
     run.cancel(runLater);
+  
+    var runScheduleOnce = run.scheduleOnce('afterRender', myContext, function() {
+      // will not be executed
+    });
+  
+    run.cancel(runScheduleOnce);
   
     var runOnce = run.once(myContext, function() {
       // will not be executed
@@ -9548,7 +9653,11 @@ enifed('ember-metal/streams/dependency', ['exports', 'ember-metal/debug', 'ember
 enifed('ember-metal/streams/key-stream', ['exports', 'ember-metal/debug', 'ember-metal/property_get', 'ember-metal/property_set', 'ember-metal/observer', 'ember-metal/streams/stream', 'ember-metal/streams/utils'], function (exports, _emberMetalDebug, _emberMetalProperty_get, _emberMetalProperty_set, _emberMetalObserver, _emberMetalStreamsStream, _emberMetalStreamsUtils) {
   'use strict';
 
-  var KeyStream = _emberMetalStreamsStream.default.extend({
+  function labelFor(source, key) {
+    return source.label ? source.label + '.' + key : key;
+  }
+
+  exports.default = _emberMetalStreamsStream.default.extend({
     init: function (source, key) {
       _emberMetalDebug.assert('KeyStream error: source must be a stream', _emberMetalStreamsUtils.isStream(source)); // TODO: This isn't necessary.
       _emberMetalDebug.assert('KeyStream error: key must be a non-empty string', typeof key === 'string' && key.length > 0);
@@ -9565,9 +9674,17 @@ enifed('ember-metal/streams/key-stream', ['exports', 'ember-metal/debug', 'ember
 
     compute: function () {
       var object = this.sourceDep.getValue();
-      if (object) {
+      var type = typeof object;
+
+      if (!object || type === 'boolean') {
+        return;
+      }
+
+      if (type === 'object') {
         return _emberMetalProperty_get.get(object, this.key);
       }
+
+      return object[this.key];
     },
 
     setValue: function (value) {
@@ -9612,12 +9729,6 @@ enifed('ember-metal/streams/key-stream', ['exports', 'ember-metal/debug', 'ember
       this._clearObservedObject();
     }
   });
-
-  function labelFor(source, key) {
-    return source.label ? source.label + '.' + key : key;
-  }
-
-  exports.default = KeyStream;
 });
 enifed('ember-metal/streams/proxy-stream', ['exports', 'ember-runtime/system/object', 'ember-metal/streams/stream'], function (exports, _emberRuntimeSystemObject, _emberMetalStreamsStream) {
   'use strict';
@@ -9651,7 +9762,7 @@ enifed('ember-metal/streams/proxy-stream', ['exports', 'ember-runtime/system/obj
 
   exports.default = ProxyStream;
 });
-enifed('ember-metal/streams/stream', ['exports', 'ember-metal/core', 'ember-metal/assign', 'ember-metal/debug', 'ember-metal/path_cache', 'ember-metal/observer', 'ember-metal/streams/utils', 'ember-metal/empty_object', 'ember-metal/streams/subscriber', 'ember-metal/streams/dependency', 'ember-metal/utils'], function (exports, _emberMetalCore, _emberMetalAssign, _emberMetalDebug, _emberMetalPath_cache, _emberMetalObserver, _emberMetalStreamsUtils, _emberMetalEmpty_object, _emberMetalStreamsSubscriber, _emberMetalStreamsDependency, _emberMetalUtils) {
+enifed('ember-metal/streams/stream', ['exports', 'ember-metal/assign', 'ember-metal/debug', 'ember-metal/path_cache', 'ember-metal/observer', 'ember-metal/streams/utils', 'ember-metal/empty_object', 'ember-metal/streams/subscriber', 'ember-metal/streams/dependency', 'ember-metal/utils', 'require'], function (exports, _emberMetalAssign, _emberMetalDebug, _emberMetalPath_cache, _emberMetalObserver, _emberMetalStreamsUtils, _emberMetalEmpty_object, _emberMetalStreamsSubscriber, _emberMetalStreamsDependency, _emberMetalUtils, _require) {
   'use strict';
 
   exports.wrap = wrap;
@@ -9693,7 +9804,7 @@ enifed('ember-metal/streams/stream', ['exports', 'ember-metal/core', 'ember-meta
     },
 
     _makeChildStream: function (key) {
-      KeyStream = KeyStream || _emberMetalCore.default.__loader.require('ember-metal/streams/key-stream').default;
+      KeyStream = KeyStream || _require.default('ember-metal/streams/key-stream').default;
       return new KeyStream(this, key);
     },
 
@@ -9833,7 +9944,7 @@ enifed('ember-metal/streams/stream', ['exports', 'ember-metal/core', 'ember-meta
       if (value !== this.observedProxy) {
         this._clearObservedProxy();
 
-        ProxyMixin = ProxyMixin || _emberMetalCore.default.__loader.require('ember-runtime/mixins/-proxy').default;
+        ProxyMixin = ProxyMixin || _require.default('ember-runtime/mixins/-proxy').default;
 
         if (ProxyMixin.detect(value)) {
           _emberMetalObserver.addObserver(value, 'content', this, this.notify);
@@ -10428,8 +10539,18 @@ enifed('ember-metal/streams/utils', ['exports', 'ember-metal/debug', 'ember-meta
     }
   }
 });
-enifed("ember-metal/symbol", ["exports"], function (exports) {
-  "use strict";
+enifed('ember-metal/symbol', ['exports', 'ember-metal/utils'], function (exports, _emberMetalUtils) {
+  'use strict';
+
+  exports.default = symbol;
+
+  function symbol(debugName) {
+    // TODO: Investigate using platform symbols, but we do not
+    // want to require non-enumerability for this API, which
+    // would introduce a large cost.
+
+    return _emberMetalUtils.intern(debugName + ' [id=' + _emberMetalUtils.GUID_KEY + Math.floor(Math.random() * new Date()) + ']');
+  }
 });
 enifed('ember-metal/utils', ['exports'], function (exports) {
   'no use strict';
@@ -10448,7 +10569,7 @@ enifed('ember-metal/utils', ['exports'], function (exports) {
     @return {Number} the uuid
   */
   exports.uuid = uuid;
-  exports.symbol = symbol;
+  exports.intern = intern;
   exports.generateGuid = generateGuid;
   exports.guidFor = guidFor;
   exports.wrap = wrap;
@@ -10525,6 +10646,7 @@ enifed('ember-metal/utils', ['exports'], function (exports) {
     @private
     @return {String} interned version of the provided string
   */
+
   function intern(str) {
     var obj = {};
     obj[str] = 1;
@@ -10534,14 +10656,6 @@ enifed('ember-metal/utils', ['exports'], function (exports) {
       }
     }
     return str;
-  }
-
-  function symbol(debugName) {
-    // TODO: Investigate using platform symbols, but we do not
-    // want to require non-enumerability for this API, which
-    // would introduce a large cost.
-
-    return intern(debugName + ' [id=' + GUID_KEY + Math.floor(Math.random() * new Date()) + ']');
   }
 
   /**
@@ -10789,6 +10903,7 @@ enifed('ember-metal/utils', ['exports'], function (exports) {
 
     superWrapper.wrappedFunction = func;
     superWrapper.__ember_observes__ = func.__ember_observes__;
+    superWrapper.__ember_observesBefore__ = func.__ember_observesBefore__;
     superWrapper.__ember_listens__ = func.__ember_listens__;
 
     return superWrapper;
@@ -11006,6 +11121,9 @@ enifed('ember-metal/watch_key', ['exports', 'ember-metal/features', 'ember-metal
   exports.watchKey = watchKey;
   exports.unwatchKey = unwatchKey;
 
+  var handleMandatorySetter = undefined,
+      lookupDescriptor = undefined;
+
   function watchKey(obj, keyName, meta) {
     // can't watch length on Array - it is special...
     if (keyName === 'length' && Array.isArray(obj)) {
@@ -11034,8 +11152,23 @@ enifed('ember-metal/watch_key', ['exports', 'ember-metal/features', 'ember-metal
     }
   }
 
-  var handleMandatorySetter = function handleMandatorySetter(m, obj, keyName) {
-    var descriptor = Object.getOwnPropertyDescriptor && Object.getOwnPropertyDescriptor(obj, keyName);
+  lookupDescriptor = function lookupDescriptor(obj, keyName) {
+    var current = obj;
+    while (current) {
+      var descriptor = Object.getOwnPropertyDescriptor(current, keyName);
+
+      if (descriptor) {
+        return descriptor;
+      }
+
+      current = Object.getPrototypeOf(current);
+    }
+
+    return null;
+  };
+
+  handleMandatorySetter = function handleMandatorySetter(m, obj, keyName) {
+    var descriptor = lookupDescriptor(obj, keyName);
     var configurable = descriptor ? descriptor.configurable : true;
     var isWritable = descriptor ? descriptor.writable : true;
     var hasValue = descriptor ? 'value' in descriptor : true;
@@ -11142,7 +11275,7 @@ enifed('ember-metal/watch_path', ['exports', 'ember-metal/meta', 'ember-metal/ch
     }
   }
 });
-enifed('ember-metal/watching', ['exports', 'ember-metal/chains', 'ember-metal/watch_key', 'ember-metal/watch_path', 'ember-metal/path_cache'], function (exports, _emberMetalChains, _emberMetalWatch_key, _emberMetalWatch_path, _emberMetalPath_cache) {
+enifed('ember-metal/watching', ['exports', 'ember-metal/chains', 'ember-metal/watch_key', 'ember-metal/watch_path', 'ember-metal/path_cache', 'ember-metal/meta'], function (exports, _emberMetalChains, _emberMetalWatch_key, _emberMetalWatch_path, _emberMetalPath_cache, _emberMetalMeta) {
   /**
   @module ember-metal
   */
@@ -11150,6 +11283,7 @@ enifed('ember-metal/watching', ['exports', 'ember-metal/chains', 'ember-metal/wa
   'use strict';
 
   exports.isWatching = isWatching;
+  exports.watcherCount = watcherCount;
   exports.unwatch = unwatch;
   exports.destroy = destroy;
 
@@ -11182,8 +11316,13 @@ enifed('ember-metal/watching', ['exports', 'ember-metal/chains', 'ember-metal/wa
   exports.watch = watch;
 
   function isWatching(obj, key) {
-    var meta = obj['__ember_meta__'];
+    var meta = _emberMetalMeta.peekMeta(obj);
     return (meta && meta.peekWatching(key)) > 0;
+  }
+
+  function watcherCount(obj, key) {
+    var meta = _emberMetalMeta.peekMeta(obj);
+    return meta && meta.peekWatching(key) || 0;
   }
 
   watch.flushPending = _emberMetalChains.flushPendingChains;
@@ -11215,11 +11354,11 @@ enifed('ember-metal/watching', ['exports', 'ember-metal/chains', 'ember-metal/wa
   */
 
   function destroy(obj) {
-    var meta = obj['__ember_meta__'];
+    var meta = _emberMetalMeta.peekMeta(obj);
     var node, nodes, key, nodeObject;
 
     if (meta) {
-      obj['__ember_meta__'] = null;
+      _emberMetalMeta.deleteMeta(obj);
       // remove chainWatchers to remove circular references that would prevent GC
       node = meta.readableChains();
       if (node) {
@@ -11277,7 +11416,6 @@ enifed('ember-metal', ['exports', 'ember-metal/core', 'ember-metal/debug', 'embe
   _emberMetalComputed.computed.and = _emberMetalComputed_macros.and;
   _emberMetalComputed.computed.or = _emberMetalComputed_macros.or;
   _emberMetalComputed.computed.any = _emberMetalComputed_macros.any;
-  _emberMetalComputed.computed.collect = _emberMetalComputed_macros.collect;
 
   // END IMPORTS
 
@@ -11303,9 +11441,9 @@ enifed('ember-metal', ['exports', 'ember-metal/core', 'ember-metal/debug', 'embe
   _emberMetalCore.default.Error = _emberMetalError.default;
   _emberMetalCore.default.guidFor = _emberMetalUtils.guidFor;
   _emberMetalCore.default.META_DESC = _emberMetalMeta.META_DESC;
-  _emberMetalCore.default.EMPTY_META = _emberMetalMeta.EMPTY_META;
   _emberMetalCore.default.meta = _emberMetalMeta.meta;
   _emberMetalCore.default.inspect = _emberMetalUtils.inspect;
+
   _emberMetalCore.default.tryCatchFinally = _emberMetalUtils.deprecatedTryCatchFinally;
   _emberMetalCore.default.makeArray = _emberMetalUtils.makeArray;
   _emberMetalCore.default.canInvoke = _emberMetalUtils.canInvoke;
@@ -12515,7 +12653,7 @@ enifed('ember-template-compiler/system/compile_options', ['exports', 'ember-meta
     options.buildMeta = function buildMeta(program) {
       return {
         fragmentReason: fragmentReason(program),
-        revision: 'Ember@2.2.0',
+        revision: 'Ember@2.3.1',
         loc: program.loc,
         moduleName: options.moduleName
       };
@@ -14168,7 +14306,7 @@ enifed("htmlbars-runtime/hooks", ["exports", "htmlbars-runtime/render", "morph-r
     return {
       meta: template.meta,
       arity: template.arity,
-      yield: yieldArgs,
+      'yield': yieldArgs, // quoted since it's a reserved word, see issue #420
       yieldItem: yieldItem(template, env, scope, morph, renderState, visitor),
       raw: template,
 
@@ -14355,7 +14493,7 @@ enifed("htmlbars-runtime/hooks", ["exports", "htmlbars-runtime/render", "morph-r
   function thisFor(options) {
     return {
       arity: options.template.arity,
-      yield: options.template.yield,
+      'yield': options.template.yield, // quoted since it's a reserved word, see issue #420
       yieldItem: options.template.yieldItem,
       yieldIn: options.template.yieldIn
     };
@@ -14844,7 +14982,8 @@ enifed("htmlbars-runtime/hooks", ["exports", "htmlbars-runtime/render", "morph-r
       return true;
     },
 
-    yield: function (morph, env, scope, params, hash, template, inverse, visitor) {
+    // quoted since it's a reserved word, see issue #420
+    'yield': function (morph, env, scope, params, hash, template, inverse, visitor) {
       // the current scope is provided purely for the creation of shadow
       // scopes; it should not be provided to user code.
 
@@ -14923,7 +15062,7 @@ enifed("htmlbars-runtime/hooks", ["exports", "htmlbars-runtime/render", "morph-r
   */
 
   function range(morph, env, scope, path, value, visitor) {
-    if (handleRedirect(morph, env, scope, path, [value], {}, null, null, visitor)) {
+    if (handleRedirect(morph, env, scope, path, [], {}, null, null, visitor)) {
       return;
     }
 
@@ -18050,6 +18189,8 @@ enifed("htmlbars-syntax/parser/tokenizer-event-handlers", ["exports", "htmlbars-
       var attributes = _currentNode.attributes;
       var modifiers = _currentNode.modifiers;
 
+      validateStartTag(this.currentNode, this.tokenizer);
+
       var loc = _htmlbarsSyntaxBuilders.default.loc(this.tokenizer.tagLine, this.tokenizer.tagColumn);
       var element = _htmlbarsSyntaxBuilders.default.element(name, attributes, modifiers, [], loc);
       this.elementStack.push(element);
@@ -18067,7 +18208,7 @@ enifed("htmlbars-syntax/parser/tokenizer-event-handlers", ["exports", "htmlbars-
       element.loc.end.line = this.tokenizer.line;
       element.loc.end.column = this.tokenizer.column;
 
-      if (disableComponentGeneration || element.tag.indexOf("-") === -1) {
+      if (disableComponentGeneration || cannotBeComponent(element.tag)) {
         _htmlbarsSyntaxUtils.appendChild(parent, element);
       } else {
         var program = _htmlbarsSyntaxBuilders.default.program(element.children);
@@ -18139,10 +18280,10 @@ enifed("htmlbars-syntax/parser/tokenizer-event-handlers", ["exports", "htmlbars-
       if (isQuoted) {
         return assembleConcatenatedValue(parts);
       } else {
-        if (parts.length === 1) {
+        if (parts.length === 1 || parts.length === 2 && parts[1] === '/') {
           return parts[0];
         } else {
-          throw new Error("An unquoted attribute value must be a string or a mustache, " + "preceeded by whitespace or a '=' character, and " + ("followed by whitespace or a '>' character (on line " + line + ")"));
+          throw new Error("An unquoted attribute value must be a string or a mustache, " + "preceeded by whitespace or a '=' character, and " + ("followed by whitespace, a '>' character or a '/>' (on line " + line + ")"));
         }
       }
     } else {
@@ -18168,22 +18309,27 @@ enifed("htmlbars-syntax/parser/tokenizer-event-handlers", ["exports", "htmlbars-
     return _htmlbarsSyntaxBuilders.default.concat(parts);
   }
 
-  function validateEndTag(tag, element, selfClosing) {
-    var error;
+  function cannotBeComponent(tagName) {
+    return tagName.indexOf("-") === -1 && tagName.indexOf(".") === -1;
+  }
 
+  function validateStartTag(tag, tokenizer) {
+    // No support for <script> tags
+    if (tag.name === "script") {
+      throw new Error("`SCRIPT` tags are not allowed in HTMLBars templates (on line " + tokenizer.tagLine + ")");
+    }
+  }
+
+  function validateEndTag(tag, element, selfClosing) {
     if (_htmlbarsUtilVoidTagNames.default[tag.name] && !selfClosing) {
       // EngTag is also called by StartTag for void and self-closing tags (i.e.
       // <input> or <br />, so we need to check for that here. Otherwise, we would
       // throw an error for those cases.
-      error = "Invalid end tag " + formatEndTagInfo(tag) + " (void elements cannot have end tags).";
+      throw new Error("Invalid end tag " + formatEndTagInfo(tag) + " (void elements cannot have end tags).");
     } else if (element.tag === undefined) {
-      error = "Closing tag " + formatEndTagInfo(tag) + " without an open tag.";
+      throw new Error("Closing tag " + formatEndTagInfo(tag) + " without an open tag.");
     } else if (element.tag !== tag.name) {
-      error = "Closing tag " + formatEndTagInfo(tag) + " did not match last open tag `" + element.tag + "` (on line " + element.loc.start.line + ").";
-    }
-
-    if (error) {
-      throw new Error(error);
+      throw new Error("Closing tag " + formatEndTagInfo(tag) + " did not match last open tag `" + element.tag + "` (on line " + element.loc.start.line + ").");
     }
   }
 
@@ -18637,7 +18783,7 @@ enifed("htmlbars-syntax", ["exports", "htmlbars-syntax/builders", "htmlbars-synt
   exports.traverse = _htmlbarsSyntaxTraversalTraverse.default;
   exports.Walker = _htmlbarsSyntaxTraversalWalker.default;
 });
-enifed("htmlbars-test-helpers", ["exports", "simple-html-tokenizer", "htmlbars-util/array-utils"], function (exports, _simpleHtmlTokenizer, _htmlbarsUtilArrayUtils) {
+enifed("htmlbars-test-helpers", ["exports", "simple-html-tokenizer/index", "htmlbars-util/array-utils"], function (exports, _simpleHtmlTokenizerIndex, _htmlbarsUtilArrayUtils) {
   "use strict";
 
   exports.equalInnerHTML = equalInnerHTML;
@@ -18677,7 +18823,7 @@ enifed("htmlbars-test-helpers", ["exports", "simple-html-tokenizer", "htmlbars-u
       div.appendChild(fragmentOrHtml.cloneNode(true));
     }
 
-    return { tokens: _simpleHtmlTokenizer.tokenize(div.innerHTML), html: div.innerHTML };
+    return { tokens: _simpleHtmlTokenizerIndex.tokenize(div.innerHTML), html: div.innerHTML };
   }
 
   function equalTokens(fragment, html, message) {
@@ -19294,7 +19440,7 @@ enifed("htmlbars-util/template-utils", ["exports", "htmlbars-util/morph-utils", 
         // If we don't see the key in handledMorphs, it wasn't
         // yielded in and we can safely remove it from DOM.
         if (!(item.key in handledMorphs)) {
-          delete morphMap[item.key];
+          morphMap[item.key] = undefined;
           clearMorph(item, env, true);
           item.destroy();
         }
@@ -19357,7 +19503,7 @@ enifed("htmlbars-util/template-utils", ["exports", "htmlbars-util/morph-utils", 
 
     while (item) {
       var next = item.nextMorph;
-      delete morph.morphMap[item.key];
+      morph.morphMap[item.key] = undefined;
       clearMorph(item, env, true);
       item.destroy();
 
@@ -19592,8 +19738,8 @@ enifed('morph-range', ['exports', 'morph-range/utils'], function (exports, _morp
           return this.setNode(content);
         }
         /* Handlebars.SafeString */
-        if (typeof content.string === 'string') {
-          return this.setHTML(content.string);
+        if (typeof content.toHTML === 'function') {
+          return this.setHTML(content.toHTML());
         }
         if (this.parseTextAsHTML) {
           return this.setHTML(content.toString());
@@ -20250,6 +20396,15 @@ enifed("simple-html-tokenizer/html5-named-char-refs", ["exports"], function (exp
     Aacute: "Á", aacute: "á", Abreve: "Ă", abreve: "ă", ac: "∾", acd: "∿", acE: "∾̳", Acirc: "Â", acirc: "â", acute: "´", Acy: "А", acy: "а", AElig: "Æ", aelig: "æ", af: "\u2061", Afr: "𝔄", afr: "𝔞", Agrave: "À", agrave: "à", alefsym: "ℵ", aleph: "ℵ", Alpha: "Α", alpha: "α", Amacr: "Ā", amacr: "ā", amalg: "⨿", AMP: "&", amp: "&", And: "⩓", and: "∧", andand: "⩕", andd: "⩜", andslope: "⩘", andv: "⩚", ang: "∠", ange: "⦤", angle: "∠", angmsd: "∡", angmsdaa: "⦨", angmsdab: "⦩", angmsdac: "⦪", angmsdad: "⦫", angmsdae: "⦬", angmsdaf: "⦭", angmsdag: "⦮", angmsdah: "⦯", angrt: "∟", angrtvb: "⊾", angrtvbd: "⦝", angsph: "∢", angst: "Å", angzarr: "⍼", Aogon: "Ą", aogon: "ą", Aopf: "𝔸", aopf: "𝕒", ap: "≈", apacir: "⩯", apE: "⩰", ape: "≊", apid: "≋", apos: "'", ApplyFunction: "\u2061", approx: "≈", approxeq: "≊", Aring: "Å", aring: "å", Ascr: "𝒜", ascr: "𝒶", Assign: "≔", ast: "*", asymp: "≈", asympeq: "≍", Atilde: "Ã", atilde: "ã", Auml: "Ä", auml: "ä", awconint: "∳", awint: "⨑", backcong: "≌", backepsilon: "϶", backprime: "‵", backsim: "∽", backsimeq: "⋍", Backslash: "∖", Barv: "⫧", barvee: "⊽", Barwed: "⌆", barwed: "⌅", barwedge: "⌅", bbrk: "⎵", bbrktbrk: "⎶", bcong: "≌", Bcy: "Б", bcy: "б", bdquo: "„", becaus: "∵", Because: "∵", because: "∵", bemptyv: "⦰", bepsi: "϶", bernou: "ℬ", Bernoullis: "ℬ", Beta: "Β", beta: "β", beth: "ℶ", between: "≬", Bfr: "𝔅", bfr: "𝔟", bigcap: "⋂", bigcirc: "◯", bigcup: "⋃", bigodot: "⨀", bigoplus: "⨁", bigotimes: "⨂", bigsqcup: "⨆", bigstar: "★", bigtriangledown: "▽", bigtriangleup: "△", biguplus: "⨄", bigvee: "⋁", bigwedge: "⋀", bkarow: "⤍", blacklozenge: "⧫", blacksquare: "▪", blacktriangle: "▴", blacktriangledown: "▾", blacktriangleleft: "◂", blacktriangleright: "▸", blank: "␣", blk12: "▒", blk14: "░", blk34: "▓", block: "█", bne: "=⃥", bnequiv: "≡⃥", bNot: "⫭", bnot: "⌐", Bopf: "𝔹", bopf: "𝕓", bot: "⊥", bottom: "⊥", bowtie: "⋈", boxbox: "⧉", boxDL: "╗", boxDl: "╖", boxdL: "╕", boxdl: "┐", boxDR: "╔", boxDr: "╓", boxdR: "╒", boxdr: "┌", boxH: "═", boxh: "─", boxHD: "╦", boxHd: "╤", boxhD: "╥", boxhd: "┬", boxHU: "╩", boxHu: "╧", boxhU: "╨", boxhu: "┴", boxminus: "⊟", boxplus: "⊞", boxtimes: "⊠", boxUL: "╝", boxUl: "╜", boxuL: "╛", boxul: "┘", boxUR: "╚", boxUr: "╙", boxuR: "╘", boxur: "└", boxV: "║", boxv: "│", boxVH: "╬", boxVh: "╫", boxvH: "╪", boxvh: "┼", boxVL: "╣", boxVl: "╢", boxvL: "╡", boxvl: "┤", boxVR: "╠", boxVr: "╟", boxvR: "╞", boxvr: "├", bprime: "‵", Breve: "˘", breve: "˘", brvbar: "¦", Bscr: "ℬ", bscr: "𝒷", bsemi: "⁏", bsim: "∽", bsime: "⋍", bsol: "\\", bsolb: "⧅", bsolhsub: "⟈", bull: "•", bullet: "•", bump: "≎", bumpE: "⪮", bumpe: "≏", Bumpeq: "≎", bumpeq: "≏", Cacute: "Ć", cacute: "ć", Cap: "⋒", cap: "∩", capand: "⩄", capbrcup: "⩉", capcap: "⩋", capcup: "⩇", capdot: "⩀", CapitalDifferentialD: "ⅅ", caps: "∩︀", caret: "⁁", caron: "ˇ", Cayleys: "ℭ", ccaps: "⩍", Ccaron: "Č", ccaron: "č", Ccedil: "Ç", ccedil: "ç", Ccirc: "Ĉ", ccirc: "ĉ", Cconint: "∰", ccups: "⩌", ccupssm: "⩐", Cdot: "Ċ", cdot: "ċ", cedil: "¸", Cedilla: "¸", cemptyv: "⦲", cent: "¢", CenterDot: "·", centerdot: "·", Cfr: "ℭ", cfr: "𝔠", CHcy: "Ч", chcy: "ч", check: "✓", checkmark: "✓", Chi: "Χ", chi: "χ", cir: "○", circ: "ˆ", circeq: "≗", circlearrowleft: "↺", circlearrowright: "↻", circledast: "⊛", circledcirc: "⊚", circleddash: "⊝", CircleDot: "⊙", circledR: "®", circledS: "Ⓢ", CircleMinus: "⊖", CirclePlus: "⊕", CircleTimes: "⊗", cirE: "⧃", cire: "≗", cirfnint: "⨐", cirmid: "⫯", cirscir: "⧂", ClockwiseContourIntegral: "∲", CloseCurlyDoubleQuote: "”", CloseCurlyQuote: "’", clubs: "♣", clubsuit: "♣", Colon: "∷", colon: ":", Colone: "⩴", colone: "≔", coloneq: "≔", comma: ",", commat: "@", comp: "∁", compfn: "∘", complement: "∁", complexes: "ℂ", cong: "≅", congdot: "⩭", Congruent: "≡", Conint: "∯", conint: "∮", ContourIntegral: "∮", Copf: "ℂ", copf: "𝕔", coprod: "∐", Coproduct: "∐", COPY: "©", copy: "©", copysr: "℗", CounterClockwiseContourIntegral: "∳", crarr: "↵", Cross: "⨯", cross: "✗", Cscr: "𝒞", cscr: "𝒸", csub: "⫏", csube: "⫑", csup: "⫐", csupe: "⫒", ctdot: "⋯", cudarrl: "⤸", cudarrr: "⤵", cuepr: "⋞", cuesc: "⋟", cularr: "↶", cularrp: "⤽", Cup: "⋓", cup: "∪", cupbrcap: "⩈", CupCap: "≍", cupcap: "⩆", cupcup: "⩊", cupdot: "⊍", cupor: "⩅", cups: "∪︀", curarr: "↷", curarrm: "⤼", curlyeqprec: "⋞", curlyeqsucc: "⋟", curlyvee: "⋎", curlywedge: "⋏", curren: "¤", curvearrowleft: "↶", curvearrowright: "↷", cuvee: "⋎", cuwed: "⋏", cwconint: "∲", cwint: "∱", cylcty: "⌭", Dagger: "‡", dagger: "†", daleth: "ℸ", Darr: "↡", dArr: "⇓", darr: "↓", dash: "‐", Dashv: "⫤", dashv: "⊣", dbkarow: "⤏", dblac: "˝", Dcaron: "Ď", dcaron: "ď", Dcy: "Д", dcy: "д", DD: "ⅅ", dd: "ⅆ", ddagger: "‡", ddarr: "⇊", DDotrahd: "⤑", ddotseq: "⩷", deg: "°", Del: "∇", Delta: "Δ", delta: "δ", demptyv: "⦱", dfisht: "⥿", Dfr: "𝔇", dfr: "𝔡", dHar: "⥥", dharl: "⇃", dharr: "⇂", DiacriticalAcute: "´", DiacriticalDot: "˙", DiacriticalDoubleAcute: "˝", DiacriticalGrave: "`", DiacriticalTilde: "˜", diam: "⋄", Diamond: "⋄", diamond: "⋄", diamondsuit: "♦", diams: "♦", die: "¨", DifferentialD: "ⅆ", digamma: "ϝ", disin: "⋲", div: "÷", divide: "÷", divideontimes: "⋇", divonx: "⋇", DJcy: "Ђ", djcy: "ђ", dlcorn: "⌞", dlcrop: "⌍", dollar: "$", Dopf: "𝔻", dopf: "𝕕", Dot: "¨", dot: "˙", DotDot: "⃜", doteq: "≐", doteqdot: "≑", DotEqual: "≐", dotminus: "∸", dotplus: "∔", dotsquare: "⊡", doublebarwedge: "⌆", DoubleContourIntegral: "∯", DoubleDot: "¨", DoubleDownArrow: "⇓", DoubleLeftArrow: "⇐", DoubleLeftRightArrow: "⇔", DoubleLeftTee: "⫤", DoubleLongLeftArrow: "⟸", DoubleLongLeftRightArrow: "⟺", DoubleLongRightArrow: "⟹", DoubleRightArrow: "⇒", DoubleRightTee: "⊨", DoubleUpArrow: "⇑", DoubleUpDownArrow: "⇕", DoubleVerticalBar: "∥", DownArrow: "↓", Downarrow: "⇓", downarrow: "↓", DownArrowBar: "⤓", DownArrowUpArrow: "⇵", DownBreve: "̑", downdownarrows: "⇊", downharpoonleft: "⇃", downharpoonright: "⇂", DownLeftRightVector: "⥐", DownLeftTeeVector: "⥞", DownLeftVector: "↽", DownLeftVectorBar: "⥖", DownRightTeeVector: "⥟", DownRightVector: "⇁", DownRightVectorBar: "⥗", DownTee: "⊤", DownTeeArrow: "↧", drbkarow: "⤐", drcorn: "⌟", drcrop: "⌌", Dscr: "𝒟", dscr: "𝒹", DScy: "Ѕ", dscy: "ѕ", dsol: "⧶", Dstrok: "Đ", dstrok: "đ", dtdot: "⋱", dtri: "▿", dtrif: "▾", duarr: "⇵", duhar: "⥯", dwangle: "⦦", DZcy: "Џ", dzcy: "џ", dzigrarr: "⟿", Eacute: "É", eacute: "é", easter: "⩮", Ecaron: "Ě", ecaron: "ě", ecir: "≖", Ecirc: "Ê", ecirc: "ê", ecolon: "≕", Ecy: "Э", ecy: "э", eDDot: "⩷", Edot: "Ė", eDot: "≑", edot: "ė", ee: "ⅇ", efDot: "≒", Efr: "𝔈", efr: "𝔢", eg: "⪚", Egrave: "È", egrave: "è", egs: "⪖", egsdot: "⪘", el: "⪙", Element: "∈", elinters: "⏧", ell: "ℓ", els: "⪕", elsdot: "⪗", Emacr: "Ē", emacr: "ē", empty: "∅", emptyset: "∅", EmptySmallSquare: "◻", emptyv: "∅", EmptyVerySmallSquare: "▫", emsp: " ", emsp13: " ", emsp14: " ", ENG: "Ŋ", eng: "ŋ", ensp: " ", Eogon: "Ę", eogon: "ę", Eopf: "𝔼", eopf: "𝕖", epar: "⋕", eparsl: "⧣", eplus: "⩱", epsi: "ε", Epsilon: "Ε", epsilon: "ε", epsiv: "ϵ", eqcirc: "≖", eqcolon: "≕", eqsim: "≂", eqslantgtr: "⪖", eqslantless: "⪕", Equal: "⩵", equals: "=", EqualTilde: "≂", equest: "≟", Equilibrium: "⇌", equiv: "≡", equivDD: "⩸", eqvparsl: "⧥", erarr: "⥱", erDot: "≓", Escr: "ℰ", escr: "ℯ", esdot: "≐", Esim: "⩳", esim: "≂", Eta: "Η", eta: "η", ETH: "Ð", eth: "ð", Euml: "Ë", euml: "ë", euro: "€", excl: "!", exist: "∃", Exists: "∃", expectation: "ℰ", ExponentialE: "ⅇ", exponentiale: "ⅇ", fallingdotseq: "≒", Fcy: "Ф", fcy: "ф", female: "♀", ffilig: "ﬃ", fflig: "ﬀ", ffllig: "ﬄ", Ffr: "𝔉", ffr: "𝔣", filig: "ﬁ", FilledSmallSquare: "◼", FilledVerySmallSquare: "▪", fjlig: "fj", flat: "♭", fllig: "ﬂ", fltns: "▱", fnof: "ƒ", Fopf: "𝔽", fopf: "𝕗", ForAll: "∀", forall: "∀", fork: "⋔", forkv: "⫙", Fouriertrf: "ℱ", fpartint: "⨍", frac12: "½", frac13: "⅓", frac14: "¼", frac15: "⅕", frac16: "⅙", frac18: "⅛", frac23: "⅔", frac25: "⅖", frac34: "¾", frac35: "⅗", frac38: "⅜", frac45: "⅘", frac56: "⅚", frac58: "⅝", frac78: "⅞", frasl: "⁄", frown: "⌢", Fscr: "ℱ", fscr: "𝒻", gacute: "ǵ", Gamma: "Γ", gamma: "γ", Gammad: "Ϝ", gammad: "ϝ", gap: "⪆", Gbreve: "Ğ", gbreve: "ğ", Gcedil: "Ģ", Gcirc: "Ĝ", gcirc: "ĝ", Gcy: "Г", gcy: "г", Gdot: "Ġ", gdot: "ġ", gE: "≧", ge: "≥", gEl: "⪌", gel: "⋛", geq: "≥", geqq: "≧", geqslant: "⩾", ges: "⩾", gescc: "⪩", gesdot: "⪀", gesdoto: "⪂", gesdotol: "⪄", gesl: "⋛︀", gesles: "⪔", Gfr: "𝔊", gfr: "𝔤", Gg: "⋙", gg: "≫", ggg: "⋙", gimel: "ℷ", GJcy: "Ѓ", gjcy: "ѓ", gl: "≷", gla: "⪥", glE: "⪒", glj: "⪤", gnap: "⪊", gnapprox: "⪊", gnE: "≩", gne: "⪈", gneq: "⪈", gneqq: "≩", gnsim: "⋧", Gopf: "𝔾", gopf: "𝕘", grave: "`", GreaterEqual: "≥", GreaterEqualLess: "⋛", GreaterFullEqual: "≧", GreaterGreater: "⪢", GreaterLess: "≷", GreaterSlantEqual: "⩾", GreaterTilde: "≳", Gscr: "𝒢", gscr: "ℊ", gsim: "≳", gsime: "⪎", gsiml: "⪐", GT: ">", Gt: "≫", gt: ">", gtcc: "⪧", gtcir: "⩺", gtdot: "⋗", gtlPar: "⦕", gtquest: "⩼", gtrapprox: "⪆", gtrarr: "⥸", gtrdot: "⋗", gtreqless: "⋛", gtreqqless: "⪌", gtrless: "≷", gtrsim: "≳", gvertneqq: "≩︀", gvnE: "≩︀", Hacek: "ˇ", hairsp: " ", half: "½", hamilt: "ℋ", HARDcy: "Ъ", hardcy: "ъ", hArr: "⇔", harr: "↔", harrcir: "⥈", harrw: "↭", Hat: "^", hbar: "ℏ", Hcirc: "Ĥ", hcirc: "ĥ", hearts: "♥", heartsuit: "♥", hellip: "…", hercon: "⊹", Hfr: "ℌ", hfr: "𝔥", HilbertSpace: "ℋ", hksearow: "⤥", hkswarow: "⤦", hoarr: "⇿", homtht: "∻", hookleftarrow: "↩", hookrightarrow: "↪", Hopf: "ℍ", hopf: "𝕙", horbar: "―", HorizontalLine: "─", Hscr: "ℋ", hscr: "𝒽", hslash: "ℏ", Hstrok: "Ħ", hstrok: "ħ", HumpDownHump: "≎", HumpEqual: "≏", hybull: "⁃", hyphen: "‐", Iacute: "Í", iacute: "í", ic: "\u2063", Icirc: "Î", icirc: "î", Icy: "И", icy: "и", Idot: "İ", IEcy: "Е", iecy: "е", iexcl: "¡", iff: "⇔", Ifr: "ℑ", ifr: "𝔦", Igrave: "Ì", igrave: "ì", ii: "ⅈ", iiiint: "⨌", iiint: "∭", iinfin: "⧜", iiota: "℩", IJlig: "Ĳ", ijlig: "ĳ", Im: "ℑ", Imacr: "Ī", imacr: "ī", image: "ℑ", ImaginaryI: "ⅈ", imagline: "ℐ", imagpart: "ℑ", imath: "ı", imof: "⊷", imped: "Ƶ", Implies: "⇒", in: "∈", incare: "℅", infin: "∞", infintie: "⧝", inodot: "ı", Int: "∬", int: "∫", intcal: "⊺", integers: "ℤ", Integral: "∫", intercal: "⊺", Intersection: "⋂", intlarhk: "⨗", intprod: "⨼", InvisibleComma: "\u2063", InvisibleTimes: "\u2062", IOcy: "Ё", iocy: "ё", Iogon: "Į", iogon: "į", Iopf: "𝕀", iopf: "𝕚", Iota: "Ι", iota: "ι", iprod: "⨼", iquest: "¿", Iscr: "ℐ", iscr: "𝒾", isin: "∈", isindot: "⋵", isinE: "⋹", isins: "⋴", isinsv: "⋳", isinv: "∈", it: "\u2062", Itilde: "Ĩ", itilde: "ĩ", Iukcy: "І", iukcy: "і", Iuml: "Ï", iuml: "ï", Jcirc: "Ĵ", jcirc: "ĵ", Jcy: "Й", jcy: "й", Jfr: "𝔍", jfr: "𝔧", jmath: "ȷ", Jopf: "𝕁", jopf: "𝕛", Jscr: "𝒥", jscr: "𝒿", Jsercy: "Ј", jsercy: "ј", Jukcy: "Є", jukcy: "є", Kappa: "Κ", kappa: "κ", kappav: "ϰ", Kcedil: "Ķ", kcedil: "ķ", Kcy: "К", kcy: "к", Kfr: "𝔎", kfr: "𝔨", kgreen: "ĸ", KHcy: "Х", khcy: "х", KJcy: "Ќ", kjcy: "ќ", Kopf: "𝕂", kopf: "𝕜", Kscr: "𝒦", kscr: "𝓀", lAarr: "⇚", Lacute: "Ĺ", lacute: "ĺ", laemptyv: "⦴", lagran: "ℒ", Lambda: "Λ", lambda: "λ", Lang: "⟪", lang: "⟨", langd: "⦑", langle: "⟨", lap: "⪅", Laplacetrf: "ℒ", laquo: "«", Larr: "↞", lArr: "⇐", larr: "←", larrb: "⇤", larrbfs: "⤟", larrfs: "⤝", larrhk: "↩", larrlp: "↫", larrpl: "⤹", larrsim: "⥳", larrtl: "↢", lat: "⪫", lAtail: "⤛", latail: "⤙", late: "⪭", lates: "⪭︀", lBarr: "⤎", lbarr: "⤌", lbbrk: "❲", lbrace: "{", lbrack: "[", lbrke: "⦋", lbrksld: "⦏", lbrkslu: "⦍", Lcaron: "Ľ", lcaron: "ľ", Lcedil: "Ļ", lcedil: "ļ", lceil: "⌈", lcub: "{", Lcy: "Л", lcy: "л", ldca: "⤶", ldquo: "“", ldquor: "„", ldrdhar: "⥧", ldrushar: "⥋", ldsh: "↲", lE: "≦", le: "≤", LeftAngleBracket: "⟨", LeftArrow: "←", Leftarrow: "⇐", leftarrow: "←", LeftArrowBar: "⇤", LeftArrowRightArrow: "⇆", leftarrowtail: "↢", LeftCeiling: "⌈", LeftDoubleBracket: "⟦", LeftDownTeeVector: "⥡", LeftDownVector: "⇃", LeftDownVectorBar: "⥙", LeftFloor: "⌊", leftharpoondown: "↽", leftharpoonup: "↼", leftleftarrows: "⇇", LeftRightArrow: "↔", Leftrightarrow: "⇔", leftrightarrow: "↔", leftrightarrows: "⇆", leftrightharpoons: "⇋", leftrightsquigarrow: "↭", LeftRightVector: "⥎", LeftTee: "⊣", LeftTeeArrow: "↤", LeftTeeVector: "⥚", leftthreetimes: "⋋", LeftTriangle: "⊲", LeftTriangleBar: "⧏", LeftTriangleEqual: "⊴", LeftUpDownVector: "⥑", LeftUpTeeVector: "⥠", LeftUpVector: "↿", LeftUpVectorBar: "⥘", LeftVector: "↼", LeftVectorBar: "⥒", lEg: "⪋", leg: "⋚", leq: "≤", leqq: "≦", leqslant: "⩽", les: "⩽", lescc: "⪨", lesdot: "⩿", lesdoto: "⪁", lesdotor: "⪃", lesg: "⋚︀", lesges: "⪓", lessapprox: "⪅", lessdot: "⋖", lesseqgtr: "⋚", lesseqqgtr: "⪋", LessEqualGreater: "⋚", LessFullEqual: "≦", LessGreater: "≶", lessgtr: "≶", LessLess: "⪡", lesssim: "≲", LessSlantEqual: "⩽", LessTilde: "≲", lfisht: "⥼", lfloor: "⌊", Lfr: "𝔏", lfr: "𝔩", lg: "≶", lgE: "⪑", lHar: "⥢", lhard: "↽", lharu: "↼", lharul: "⥪", lhblk: "▄", LJcy: "Љ", ljcy: "љ", Ll: "⋘", ll: "≪", llarr: "⇇", llcorner: "⌞", Lleftarrow: "⇚", llhard: "⥫", lltri: "◺", Lmidot: "Ŀ", lmidot: "ŀ", lmoust: "⎰", lmoustache: "⎰", lnap: "⪉", lnapprox: "⪉", lnE: "≨", lne: "⪇", lneq: "⪇", lneqq: "≨", lnsim: "⋦", loang: "⟬", loarr: "⇽", lobrk: "⟦", LongLeftArrow: "⟵", Longleftarrow: "⟸", longleftarrow: "⟵", LongLeftRightArrow: "⟷", Longleftrightarrow: "⟺", longleftrightarrow: "⟷", longmapsto: "⟼", LongRightArrow: "⟶", Longrightarrow: "⟹", longrightarrow: "⟶", looparrowleft: "↫", looparrowright: "↬", lopar: "⦅", Lopf: "𝕃", lopf: "𝕝", loplus: "⨭", lotimes: "⨴", lowast: "∗", lowbar: "_", LowerLeftArrow: "↙", LowerRightArrow: "↘", loz: "◊", lozenge: "◊", lozf: "⧫", lpar: "(", lparlt: "⦓", lrarr: "⇆", lrcorner: "⌟", lrhar: "⇋", lrhard: "⥭", lrm: "\u200e", lrtri: "⊿", lsaquo: "‹", Lscr: "ℒ", lscr: "𝓁", Lsh: "↰", lsh: "↰", lsim: "≲", lsime: "⪍", lsimg: "⪏", lsqb: "[", lsquo: "‘", lsquor: "‚", Lstrok: "Ł", lstrok: "ł", LT: "<", Lt: "≪", lt: "<", ltcc: "⪦", ltcir: "⩹", ltdot: "⋖", lthree: "⋋", ltimes: "⋉", ltlarr: "⥶", ltquest: "⩻", ltri: "◃", ltrie: "⊴", ltrif: "◂", ltrPar: "⦖", lurdshar: "⥊", luruhar: "⥦", lvertneqq: "≨︀", lvnE: "≨︀", macr: "¯", male: "♂", malt: "✠", maltese: "✠", Map: "⤅", map: "↦", mapsto: "↦", mapstodown: "↧", mapstoleft: "↤", mapstoup: "↥", marker: "▮", mcomma: "⨩", Mcy: "М", mcy: "м", mdash: "—", mDDot: "∺", measuredangle: "∡", MediumSpace: " ", Mellintrf: "ℳ", Mfr: "𝔐", mfr: "𝔪", mho: "℧", micro: "µ", mid: "∣", midast: "*", midcir: "⫰", middot: "·", minus: "−", minusb: "⊟", minusd: "∸", minusdu: "⨪", MinusPlus: "∓", mlcp: "⫛", mldr: "…", mnplus: "∓", models: "⊧", Mopf: "𝕄", mopf: "𝕞", mp: "∓", Mscr: "ℳ", mscr: "𝓂", mstpos: "∾", Mu: "Μ", mu: "μ", multimap: "⊸", mumap: "⊸", nabla: "∇", Nacute: "Ń", nacute: "ń", nang: "∠⃒", nap: "≉", napE: "⩰̸", napid: "≋̸", napos: "ŉ", napprox: "≉", natur: "♮", natural: "♮", naturals: "ℕ", nbsp: " ", nbump: "≎̸", nbumpe: "≏̸", ncap: "⩃", Ncaron: "Ň", ncaron: "ň", Ncedil: "Ņ", ncedil: "ņ", ncong: "≇", ncongdot: "⩭̸", ncup: "⩂", Ncy: "Н", ncy: "н", ndash: "–", ne: "≠", nearhk: "⤤", neArr: "⇗", nearr: "↗", nearrow: "↗", nedot: "≐̸", NegativeMediumSpace: "​", NegativeThickSpace: "​", NegativeThinSpace: "​", NegativeVeryThinSpace: "​", nequiv: "≢", nesear: "⤨", nesim: "≂̸", NestedGreaterGreater: "≫", NestedLessLess: "≪", NewLine: "\u000a", nexist: "∄", nexists: "∄", Nfr: "𝔑", nfr: "𝔫", ngE: "≧̸", nge: "≱", ngeq: "≱", ngeqq: "≧̸", ngeqslant: "⩾̸", nges: "⩾̸", nGg: "⋙̸", ngsim: "≵", nGt: "≫⃒", ngt: "≯", ngtr: "≯", nGtv: "≫̸", nhArr: "⇎", nharr: "↮", nhpar: "⫲", ni: "∋", nis: "⋼", nisd: "⋺", niv: "∋", NJcy: "Њ", njcy: "њ", nlArr: "⇍", nlarr: "↚", nldr: "‥", nlE: "≦̸", nle: "≰", nLeftarrow: "⇍", nleftarrow: "↚", nLeftrightarrow: "⇎", nleftrightarrow: "↮", nleq: "≰", nleqq: "≦̸", nleqslant: "⩽̸", nles: "⩽̸", nless: "≮", nLl: "⋘̸", nlsim: "≴", nLt: "≪⃒", nlt: "≮", nltri: "⋪", nltrie: "⋬", nLtv: "≪̸", nmid: "∤", NoBreak: "\u2060", NonBreakingSpace: " ", Nopf: "ℕ", nopf: "𝕟", Not: "⫬", not: "¬", NotCongruent: "≢", NotCupCap: "≭", NotDoubleVerticalBar: "∦", NotElement: "∉", NotEqual: "≠", NotEqualTilde: "≂̸", NotExists: "∄", NotGreater: "≯", NotGreaterEqual: "≱", NotGreaterFullEqual: "≧̸", NotGreaterGreater: "≫̸", NotGreaterLess: "≹", NotGreaterSlantEqual: "⩾̸", NotGreaterTilde: "≵", NotHumpDownHump: "≎̸", NotHumpEqual: "≏̸", notin: "∉", notindot: "⋵̸", notinE: "⋹̸", notinva: "∉", notinvb: "⋷", notinvc: "⋶", NotLeftTriangle: "⋪", NotLeftTriangleBar: "⧏̸", NotLeftTriangleEqual: "⋬", NotLess: "≮", NotLessEqual: "≰", NotLessGreater: "≸", NotLessLess: "≪̸", NotLessSlantEqual: "⩽̸", NotLessTilde: "≴", NotNestedGreaterGreater: "⪢̸", NotNestedLessLess: "⪡̸", notni: "∌", notniva: "∌", notnivb: "⋾", notnivc: "⋽", NotPrecedes: "⊀", NotPrecedesEqual: "⪯̸", NotPrecedesSlantEqual: "⋠", NotReverseElement: "∌", NotRightTriangle: "⋫", NotRightTriangleBar: "⧐̸", NotRightTriangleEqual: "⋭", NotSquareSubset: "⊏̸", NotSquareSubsetEqual: "⋢", NotSquareSuperset: "⊐̸", NotSquareSupersetEqual: "⋣", NotSubset: "⊂⃒", NotSubsetEqual: "⊈", NotSucceeds: "⊁", NotSucceedsEqual: "⪰̸", NotSucceedsSlantEqual: "⋡", NotSucceedsTilde: "≿̸", NotSuperset: "⊃⃒", NotSupersetEqual: "⊉", NotTilde: "≁", NotTildeEqual: "≄", NotTildeFullEqual: "≇", NotTildeTilde: "≉", NotVerticalBar: "∤", npar: "∦", nparallel: "∦", nparsl: "⫽⃥", npart: "∂̸", npolint: "⨔", npr: "⊀", nprcue: "⋠", npre: "⪯̸", nprec: "⊀", npreceq: "⪯̸", nrArr: "⇏", nrarr: "↛", nrarrc: "⤳̸", nrarrw: "↝̸", nRightarrow: "⇏", nrightarrow: "↛", nrtri: "⋫", nrtrie: "⋭", nsc: "⊁", nsccue: "⋡", nsce: "⪰̸", Nscr: "𝒩", nscr: "𝓃", nshortmid: "∤", nshortparallel: "∦", nsim: "≁", nsime: "≄", nsimeq: "≄", nsmid: "∤", nspar: "∦", nsqsube: "⋢", nsqsupe: "⋣", nsub: "⊄", nsubE: "⫅̸", nsube: "⊈", nsubset: "⊂⃒", nsubseteq: "⊈", nsubseteqq: "⫅̸", nsucc: "⊁", nsucceq: "⪰̸", nsup: "⊅", nsupE: "⫆̸", nsupe: "⊉", nsupset: "⊃⃒", nsupseteq: "⊉", nsupseteqq: "⫆̸", ntgl: "≹", Ntilde: "Ñ", ntilde: "ñ", ntlg: "≸", ntriangleleft: "⋪", ntrianglelefteq: "⋬", ntriangleright: "⋫", ntrianglerighteq: "⋭", Nu: "Ν", nu: "ν", num: "#", numero: "№", numsp: " ", nvap: "≍⃒", nVDash: "⊯", nVdash: "⊮", nvDash: "⊭", nvdash: "⊬", nvge: "≥⃒", nvgt: ">⃒", nvHarr: "⤄", nvinfin: "⧞", nvlArr: "⤂", nvle: "≤⃒", nvlt: "<⃒", nvltrie: "⊴⃒", nvrArr: "⤃", nvrtrie: "⊵⃒", nvsim: "∼⃒", nwarhk: "⤣", nwArr: "⇖", nwarr: "↖", nwarrow: "↖", nwnear: "⤧", Oacute: "Ó", oacute: "ó", oast: "⊛", ocir: "⊚", Ocirc: "Ô", ocirc: "ô", Ocy: "О", ocy: "о", odash: "⊝", Odblac: "Ő", odblac: "ő", odiv: "⨸", odot: "⊙", odsold: "⦼", OElig: "Œ", oelig: "œ", ofcir: "⦿", Ofr: "𝔒", ofr: "𝔬", ogon: "˛", Ograve: "Ò", ograve: "ò", ogt: "⧁", ohbar: "⦵", ohm: "Ω", oint: "∮", olarr: "↺", olcir: "⦾", olcross: "⦻", oline: "‾", olt: "⧀", Omacr: "Ō", omacr: "ō", Omega: "Ω", omega: "ω", Omicron: "Ο", omicron: "ο", omid: "⦶", ominus: "⊖", Oopf: "𝕆", oopf: "𝕠", opar: "⦷", OpenCurlyDoubleQuote: "“", OpenCurlyQuote: "‘", operp: "⦹", oplus: "⊕", Or: "⩔", or: "∨", orarr: "↻", ord: "⩝", order: "ℴ", orderof: "ℴ", ordf: "ª", ordm: "º", origof: "⊶", oror: "⩖", orslope: "⩗", orv: "⩛", oS: "Ⓢ", Oscr: "𝒪", oscr: "ℴ", Oslash: "Ø", oslash: "ø", osol: "⊘", Otilde: "Õ", otilde: "õ", Otimes: "⨷", otimes: "⊗", otimesas: "⨶", Ouml: "Ö", ouml: "ö", ovbar: "⌽", OverBar: "‾", OverBrace: "⏞", OverBracket: "⎴", OverParenthesis: "⏜", par: "∥", para: "¶", parallel: "∥", parsim: "⫳", parsl: "⫽", part: "∂", PartialD: "∂", Pcy: "П", pcy: "п", percnt: "%", period: ".", permil: "‰", perp: "⊥", pertenk: "‱", Pfr: "𝔓", pfr: "𝔭", Phi: "Φ", phi: "φ", phiv: "ϕ", phmmat: "ℳ", phone: "☎", Pi: "Π", pi: "π", pitchfork: "⋔", piv: "ϖ", planck: "ℏ", planckh: "ℎ", plankv: "ℏ", plus: "+", plusacir: "⨣", plusb: "⊞", pluscir: "⨢", plusdo: "∔", plusdu: "⨥", pluse: "⩲", PlusMinus: "±", plusmn: "±", plussim: "⨦", plustwo: "⨧", pm: "±", Poincareplane: "ℌ", pointint: "⨕", Popf: "ℙ", popf: "𝕡", pound: "£", Pr: "⪻", pr: "≺", prap: "⪷", prcue: "≼", prE: "⪳", pre: "⪯", prec: "≺", precapprox: "⪷", preccurlyeq: "≼", Precedes: "≺", PrecedesEqual: "⪯", PrecedesSlantEqual: "≼", PrecedesTilde: "≾", preceq: "⪯", precnapprox: "⪹", precneqq: "⪵", precnsim: "⋨", precsim: "≾", Prime: "″", prime: "′", primes: "ℙ", prnap: "⪹", prnE: "⪵", prnsim: "⋨", prod: "∏", Product: "∏", profalar: "⌮", profline: "⌒", profsurf: "⌓", prop: "∝", Proportion: "∷", Proportional: "∝", propto: "∝", prsim: "≾", prurel: "⊰", Pscr: "𝒫", pscr: "𝓅", Psi: "Ψ", psi: "ψ", puncsp: " ", Qfr: "𝔔", qfr: "𝔮", qint: "⨌", Qopf: "ℚ", qopf: "𝕢", qprime: "⁗", Qscr: "𝒬", qscr: "𝓆", quaternions: "ℍ", quatint: "⨖", quest: "?", questeq: "≟", QUOT: "\"", quot: "\"", rAarr: "⇛", race: "∽̱", Racute: "Ŕ", racute: "ŕ", radic: "√", raemptyv: "⦳", Rang: "⟫", rang: "⟩", rangd: "⦒", range: "⦥", rangle: "⟩", raquo: "»", Rarr: "↠", rArr: "⇒", rarr: "→", rarrap: "⥵", rarrb: "⇥", rarrbfs: "⤠", rarrc: "⤳", rarrfs: "⤞", rarrhk: "↪", rarrlp: "↬", rarrpl: "⥅", rarrsim: "⥴", Rarrtl: "⤖", rarrtl: "↣", rarrw: "↝", rAtail: "⤜", ratail: "⤚", ratio: "∶", rationals: "ℚ", RBarr: "⤐", rBarr: "⤏", rbarr: "⤍", rbbrk: "❳", rbrace: "}", rbrack: "]", rbrke: "⦌", rbrksld: "⦎", rbrkslu: "⦐", Rcaron: "Ř", rcaron: "ř", Rcedil: "Ŗ", rcedil: "ŗ", rceil: "⌉", rcub: "}", Rcy: "Р", rcy: "р", rdca: "⤷", rdldhar: "⥩", rdquo: "”", rdquor: "”", rdsh: "↳", Re: "ℜ", real: "ℜ", realine: "ℛ", realpart: "ℜ", reals: "ℝ", rect: "▭", REG: "®", reg: "®", ReverseElement: "∋", ReverseEquilibrium: "⇋", ReverseUpEquilibrium: "⥯", rfisht: "⥽", rfloor: "⌋", Rfr: "ℜ", rfr: "𝔯", rHar: "⥤", rhard: "⇁", rharu: "⇀", rharul: "⥬", Rho: "Ρ", rho: "ρ", rhov: "ϱ", RightAngleBracket: "⟩", RightArrow: "→", Rightarrow: "⇒", rightarrow: "→", RightArrowBar: "⇥", RightArrowLeftArrow: "⇄", rightarrowtail: "↣", RightCeiling: "⌉", RightDoubleBracket: "⟧", RightDownTeeVector: "⥝", RightDownVector: "⇂", RightDownVectorBar: "⥕", RightFloor: "⌋", rightharpoondown: "⇁", rightharpoonup: "⇀", rightleftarrows: "⇄", rightleftharpoons: "⇌", rightrightarrows: "⇉", rightsquigarrow: "↝", RightTee: "⊢", RightTeeArrow: "↦", RightTeeVector: "⥛", rightthreetimes: "⋌", RightTriangle: "⊳", RightTriangleBar: "⧐", RightTriangleEqual: "⊵", RightUpDownVector: "⥏", RightUpTeeVector: "⥜", RightUpVector: "↾", RightUpVectorBar: "⥔", RightVector: "⇀", RightVectorBar: "⥓", ring: "˚", risingdotseq: "≓", rlarr: "⇄", rlhar: "⇌", rlm: "\u200f", rmoust: "⎱", rmoustache: "⎱", rnmid: "⫮", roang: "⟭", roarr: "⇾", robrk: "⟧", ropar: "⦆", Ropf: "ℝ", ropf: "𝕣", roplus: "⨮", rotimes: "⨵", RoundImplies: "⥰", rpar: ")", rpargt: "⦔", rppolint: "⨒", rrarr: "⇉", Rrightarrow: "⇛", rsaquo: "›", Rscr: "ℛ", rscr: "𝓇", Rsh: "↱", rsh: "↱", rsqb: "]", rsquo: "’", rsquor: "’", rthree: "⋌", rtimes: "⋊", rtri: "▹", rtrie: "⊵", rtrif: "▸", rtriltri: "⧎", RuleDelayed: "⧴", ruluhar: "⥨", rx: "℞", Sacute: "Ś", sacute: "ś", sbquo: "‚", Sc: "⪼", sc: "≻", scap: "⪸", Scaron: "Š", scaron: "š", sccue: "≽", scE: "⪴", sce: "⪰", Scedil: "Ş", scedil: "ş", Scirc: "Ŝ", scirc: "ŝ", scnap: "⪺", scnE: "⪶", scnsim: "⋩", scpolint: "⨓", scsim: "≿", Scy: "С", scy: "с", sdot: "⋅", sdotb: "⊡", sdote: "⩦", searhk: "⤥", seArr: "⇘", searr: "↘", searrow: "↘", sect: "§", semi: ";", seswar: "⤩", setminus: "∖", setmn: "∖", sext: "✶", Sfr: "𝔖", sfr: "𝔰", sfrown: "⌢", sharp: "♯", SHCHcy: "Щ", shchcy: "щ", SHcy: "Ш", shcy: "ш", ShortDownArrow: "↓", ShortLeftArrow: "←", shortmid: "∣", shortparallel: "∥", ShortRightArrow: "→", ShortUpArrow: "↑", shy: "\u00ad", Sigma: "Σ", sigma: "σ", sigmaf: "ς", sigmav: "ς", sim: "∼", simdot: "⩪", sime: "≃", simeq: "≃", simg: "⪞", simgE: "⪠", siml: "⪝", simlE: "⪟", simne: "≆", simplus: "⨤", simrarr: "⥲", slarr: "←", SmallCircle: "∘", smallsetminus: "∖", smashp: "⨳", smeparsl: "⧤", smid: "∣", smile: "⌣", smt: "⪪", smte: "⪬", smtes: "⪬︀", SOFTcy: "Ь", softcy: "ь", sol: "/", solb: "⧄", solbar: "⌿", Sopf: "𝕊", sopf: "𝕤", spades: "♠", spadesuit: "♠", spar: "∥", sqcap: "⊓", sqcaps: "⊓︀", sqcup: "⊔", sqcups: "⊔︀", Sqrt: "√", sqsub: "⊏", sqsube: "⊑", sqsubset: "⊏", sqsubseteq: "⊑", sqsup: "⊐", sqsupe: "⊒", sqsupset: "⊐", sqsupseteq: "⊒", squ: "□", Square: "□", square: "□", SquareIntersection: "⊓", SquareSubset: "⊏", SquareSubsetEqual: "⊑", SquareSuperset: "⊐", SquareSupersetEqual: "⊒", SquareUnion: "⊔", squarf: "▪", squf: "▪", srarr: "→", Sscr: "𝒮", sscr: "𝓈", ssetmn: "∖", ssmile: "⌣", sstarf: "⋆", Star: "⋆", star: "☆", starf: "★", straightepsilon: "ϵ", straightphi: "ϕ", strns: "¯", Sub: "⋐", sub: "⊂", subdot: "⪽", subE: "⫅", sube: "⊆", subedot: "⫃", submult: "⫁", subnE: "⫋", subne: "⊊", subplus: "⪿", subrarr: "⥹", Subset: "⋐", subset: "⊂", subseteq: "⊆", subseteqq: "⫅", SubsetEqual: "⊆", subsetneq: "⊊", subsetneqq: "⫋", subsim: "⫇", subsub: "⫕", subsup: "⫓", succ: "≻", succapprox: "⪸", succcurlyeq: "≽", Succeeds: "≻", SucceedsEqual: "⪰", SucceedsSlantEqual: "≽", SucceedsTilde: "≿", succeq: "⪰", succnapprox: "⪺", succneqq: "⪶", succnsim: "⋩", succsim: "≿", SuchThat: "∋", Sum: "∑", sum: "∑", sung: "♪", Sup: "⋑", sup: "⊃", sup1: "¹", sup2: "²", sup3: "³", supdot: "⪾", supdsub: "⫘", supE: "⫆", supe: "⊇", supedot: "⫄", Superset: "⊃", SupersetEqual: "⊇", suphsol: "⟉", suphsub: "⫗", suplarr: "⥻", supmult: "⫂", supnE: "⫌", supne: "⊋", supplus: "⫀", Supset: "⋑", supset: "⊃", supseteq: "⊇", supseteqq: "⫆", supsetneq: "⊋", supsetneqq: "⫌", supsim: "⫈", supsub: "⫔", supsup: "⫖", swarhk: "⤦", swArr: "⇙", swarr: "↙", swarrow: "↙", swnwar: "⤪", szlig: "ß", Tab: "\u0009", target: "⌖", Tau: "Τ", tau: "τ", tbrk: "⎴", Tcaron: "Ť", tcaron: "ť", Tcedil: "Ţ", tcedil: "ţ", Tcy: "Т", tcy: "т", tdot: "⃛", telrec: "⌕", Tfr: "𝔗", tfr: "𝔱", there4: "∴", Therefore: "∴", therefore: "∴", Theta: "Θ", theta: "θ", thetasym: "ϑ", thetav: "ϑ", thickapprox: "≈", thicksim: "∼", ThickSpace: "  ", thinsp: " ", ThinSpace: " ", thkap: "≈", thksim: "∼", THORN: "Þ", thorn: "þ", Tilde: "∼", tilde: "˜", TildeEqual: "≃", TildeFullEqual: "≅", TildeTilde: "≈", times: "×", timesb: "⊠", timesbar: "⨱", timesd: "⨰", tint: "∭", toea: "⤨", top: "⊤", topbot: "⌶", topcir: "⫱", Topf: "𝕋", topf: "𝕥", topfork: "⫚", tosa: "⤩", tprime: "‴", TRADE: "™", trade: "™", triangle: "▵", triangledown: "▿", triangleleft: "◃", trianglelefteq: "⊴", triangleq: "≜", triangleright: "▹", trianglerighteq: "⊵", tridot: "◬", trie: "≜", triminus: "⨺", TripleDot: "⃛", triplus: "⨹", trisb: "⧍", tritime: "⨻", trpezium: "⏢", Tscr: "𝒯", tscr: "𝓉", TScy: "Ц", tscy: "ц", TSHcy: "Ћ", tshcy: "ћ", Tstrok: "Ŧ", tstrok: "ŧ", twixt: "≬", twoheadleftarrow: "↞", twoheadrightarrow: "↠", Uacute: "Ú", uacute: "ú", Uarr: "↟", uArr: "⇑", uarr: "↑", Uarrocir: "⥉", Ubrcy: "Ў", ubrcy: "ў", Ubreve: "Ŭ", ubreve: "ŭ", Ucirc: "Û", ucirc: "û", Ucy: "У", ucy: "у", udarr: "⇅", Udblac: "Ű", udblac: "ű", udhar: "⥮", ufisht: "⥾", Ufr: "𝔘", ufr: "𝔲", Ugrave: "Ù", ugrave: "ù", uHar: "⥣", uharl: "↿", uharr: "↾", uhblk: "▀", ulcorn: "⌜", ulcorner: "⌜", ulcrop: "⌏", ultri: "◸", Umacr: "Ū", umacr: "ū", uml: "¨", UnderBar: "_", UnderBrace: "⏟", UnderBracket: "⎵", UnderParenthesis: "⏝", Union: "⋃", UnionPlus: "⊎", Uogon: "Ų", uogon: "ų", Uopf: "𝕌", uopf: "𝕦", UpArrow: "↑", Uparrow: "⇑", uparrow: "↑", UpArrowBar: "⤒", UpArrowDownArrow: "⇅", UpDownArrow: "↕", Updownarrow: "⇕", updownarrow: "↕", UpEquilibrium: "⥮", upharpoonleft: "↿", upharpoonright: "↾", uplus: "⊎", UpperLeftArrow: "↖", UpperRightArrow: "↗", Upsi: "ϒ", upsi: "υ", upsih: "ϒ", Upsilon: "Υ", upsilon: "υ", UpTee: "⊥", UpTeeArrow: "↥", upuparrows: "⇈", urcorn: "⌝", urcorner: "⌝", urcrop: "⌎", Uring: "Ů", uring: "ů", urtri: "◹", Uscr: "𝒰", uscr: "𝓊", utdot: "⋰", Utilde: "Ũ", utilde: "ũ", utri: "▵", utrif: "▴", uuarr: "⇈", Uuml: "Ü", uuml: "ü", uwangle: "⦧", vangrt: "⦜", varepsilon: "ϵ", varkappa: "ϰ", varnothing: "∅", varphi: "ϕ", varpi: "ϖ", varpropto: "∝", vArr: "⇕", varr: "↕", varrho: "ϱ", varsigma: "ς", varsubsetneq: "⊊︀", varsubsetneqq: "⫋︀", varsupsetneq: "⊋︀", varsupsetneqq: "⫌︀", vartheta: "ϑ", vartriangleleft: "⊲", vartriangleright: "⊳", Vbar: "⫫", vBar: "⫨", vBarv: "⫩", Vcy: "В", vcy: "в", VDash: "⊫", Vdash: "⊩", vDash: "⊨", vdash: "⊢", Vdashl: "⫦", Vee: "⋁", vee: "∨", veebar: "⊻", veeeq: "≚", vellip: "⋮", Verbar: "‖", verbar: "|", Vert: "‖", vert: "|", VerticalBar: "∣", VerticalLine: "|", VerticalSeparator: "❘", VerticalTilde: "≀", VeryThinSpace: " ", Vfr: "𝔙", vfr: "𝔳", vltri: "⊲", vnsub: "⊂⃒", vnsup: "⊃⃒", Vopf: "𝕍", vopf: "𝕧", vprop: "∝", vrtri: "⊳", Vscr: "𝒱", vscr: "𝓋", vsubnE: "⫋︀", vsubne: "⊊︀", vsupnE: "⫌︀", vsupne: "⊋︀", Vvdash: "⊪", vzigzag: "⦚", Wcirc: "Ŵ", wcirc: "ŵ", wedbar: "⩟", Wedge: "⋀", wedge: "∧", wedgeq: "≙", weierp: "℘", Wfr: "𝔚", wfr: "𝔴", Wopf: "𝕎", wopf: "𝕨", wp: "℘", wr: "≀", wreath: "≀", Wscr: "𝒲", wscr: "𝓌", xcap: "⋂", xcirc: "◯", xcup: "⋃", xdtri: "▽", Xfr: "𝔛", xfr: "𝔵", xhArr: "⟺", xharr: "⟷", Xi: "Ξ", xi: "ξ", xlArr: "⟸", xlarr: "⟵", xmap: "⟼", xnis: "⋻", xodot: "⨀", Xopf: "𝕏", xopf: "𝕩", xoplus: "⨁", xotime: "⨂", xrArr: "⟹", xrarr: "⟶", Xscr: "𝒳", xscr: "𝓍", xsqcup: "⨆", xuplus: "⨄", xutri: "△", xvee: "⋁", xwedge: "⋀", Yacute: "Ý", yacute: "ý", YAcy: "Я", yacy: "я", Ycirc: "Ŷ", ycirc: "ŷ", Ycy: "Ы", ycy: "ы", yen: "¥", Yfr: "𝔜", yfr: "𝔶", YIcy: "Ї", yicy: "ї", Yopf: "𝕐", yopf: "𝕪", Yscr: "𝒴", yscr: "𝓎", YUcy: "Ю", yucy: "ю", Yuml: "Ÿ", yuml: "ÿ", Zacute: "Ź", zacute: "ź", Zcaron: "Ž", zcaron: "ž", Zcy: "З", zcy: "з", Zdot: "Ż", zdot: "ż", zeetrf: "ℨ", ZeroWidthSpace: "​", Zeta: "Ζ", zeta: "ζ", Zfr: "ℨ", zfr: "𝔷", ZHcy: "Ж", zhcy: "ж", zigrarr: "⇝", Zopf: "ℤ", zopf: "𝕫", Zscr: "𝒵", zscr: "𝓏", zwj: "\u200d", zwnj: "\u200c"
   };
 });
+enifed('simple-html-tokenizer/index', ['exports', 'simple-html-tokenizer/html5-named-char-refs', 'simple-html-tokenizer/entity-parser', 'simple-html-tokenizer/evented-tokenizer', 'simple-html-tokenizer/tokenizer', 'simple-html-tokenizer/tokenize'], function (exports, _simpleHtmlTokenizerHtml5NamedCharRefs, _simpleHtmlTokenizerEntityParser, _simpleHtmlTokenizerEventedTokenizer, _simpleHtmlTokenizerTokenizer, _simpleHtmlTokenizerTokenize) {
+  'use strict';
+
+  exports.HTML5NamedCharRefs = _simpleHtmlTokenizerHtml5NamedCharRefs.default;
+  exports.EntityParser = _simpleHtmlTokenizerEntityParser.default;
+  exports.EventedTokenizer = _simpleHtmlTokenizerEventedTokenizer.default;
+  exports.Tokenizer = _simpleHtmlTokenizerTokenizer.default;
+  exports.tokenize = _simpleHtmlTokenizerTokenize.default;
+});
 enifed('simple-html-tokenizer/tokenize', ['exports', 'simple-html-tokenizer/tokenizer', 'simple-html-tokenizer/entity-parser', 'simple-html-tokenizer/html5-named-char-refs'], function (exports, _simpleHtmlTokenizerTokenizer, _simpleHtmlTokenizerEntityParser, _simpleHtmlTokenizerHtml5NamedCharRefs) {
   'use strict';
 
@@ -20429,15 +20584,6 @@ enifed("simple-html-tokenizer/utils", ["exports"], function (exports) {
   function preprocessInput(input) {
     return input.replace(CRLF, "\n");
   }
-});
-enifed('simple-html-tokenizer', ['exports', 'simple-html-tokenizer/html5-named-char-refs', 'simple-html-tokenizer/entity-parser', 'simple-html-tokenizer/evented-tokenizer', 'simple-html-tokenizer/tokenizer', 'simple-html-tokenizer/tokenize'], function (exports, _simpleHtmlTokenizerHtml5NamedCharRefs, _simpleHtmlTokenizerEntityParser, _simpleHtmlTokenizerEventedTokenizer, _simpleHtmlTokenizerTokenizer, _simpleHtmlTokenizerTokenize) {
-  'use strict';
-
-  exports.HTML5NamedCharRefs = _simpleHtmlTokenizerHtml5NamedCharRefs.default;
-  exports.EntityParser = _simpleHtmlTokenizerEntityParser.default;
-  exports.EventedTokenizer = _simpleHtmlTokenizerEventedTokenizer.default;
-  exports.Tokenizer = _simpleHtmlTokenizerTokenizer.default;
-  exports.tokenize = _simpleHtmlTokenizerTokenize.default;
 });
 requireModule("ember-debug");
 requireModule("ember-template-compiler");

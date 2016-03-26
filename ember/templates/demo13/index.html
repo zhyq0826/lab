@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script type="text/javascript" src="../../js/ember-template-compiler.js" ></script>
+    <script type="text/javascript" src="../../js/ember.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script>
+    EmberENV = {
+      FEATURES: {
+        'ember-htmlbars': true,
+        'ember-htmlbars-block-params': true
+      }
+    }
+  </script>
+</head>
+<body>
+    <p>
+      component block
+    </p>
+    <script type="text/x-handlebars" data-template-name="application">
+        <h1>application</h1>
+        {{x-people}}
+        {{#x-people}}{{/x-people}}
+        {{#x-people}}something{{/x-people}}
+    </script>
+      
+    <script type="text/x-handlebars" data-template-name="components/x-people">
+        <h1>x component {{elementId}}</h1>
+        {{#if hasBlock}}
+          hasBlock
+        {{/if}}
+    </script>
+    
+
+    <script>
+        App = Ember.Application.create({
+          LOG_TRANSITIONS: true,
+          LOG_VIEW_LOOKUPS: true
+        });
+
+        App.PeopleMixin = Ember.Mixin.create({
+          didInsertElement:function(){
+            this._super.apply(this, arguments);
+            this.log();
+          },
+          log: function(action){
+            console.log(this.elementId+'==>'+this.hasBlock);
+          },
+          init: function(){
+            this._super.apply(this, arguments);
+            this.log();
+          },
+          hasBlock: Ember.computed.bool('template').readOnly()
+        })
+
+        App.XPeopleComponent = Ember.Component.extend(App.PeopleMixin,{
+          internal: 'internal',
+        });
+
+    </script>
+
+</body>
+</html>

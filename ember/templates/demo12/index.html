@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script type="text/javascript" src="../../js/ember-template-compiler.js" ></script>
+    <script type="text/javascript" src="../../js/ember.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script>
+    EmberENV = {
+      FEATURES: {
+        'ember-htmlbars': true,
+        'ember-htmlbars-block-params': true
+      }
+    }
+  </script>
+</head>
+<body>
+    <p>
+      service getOwner
+    </p>
+    <script type="text/x-handlebars" data-template-name="application">
+        <h1>application</h1>
+    </script>      
+    
+
+    <script>
+        App = Ember.Application.create({
+          LOG_TRANSITIONS: true,
+          LOG_VIEW_LOOKUPS: true
+        });
+
+        App.ApplicationController = Ember.Controller.extend({
+            people: [
+              {firstName: 'Kris', lastName: 'Selden'},
+              {firstName: 'Luke', lastName: 'Melia'},
+              {firstName: 'Formerly Alex', lastName: 'Matchneer'}
+            ],
+            actions: {
+                changeExternal: function(){
+                  this.set('value', new Date());
+                }
+            }
+        });
+
+        App.PeopleModel = Ember.Object.extend({
+          name:'hello'
+        });
+
+        App.StoreService = Ember.Service.extend({
+          createRecord(){
+            var owner = Ember.getOwner(this);
+            console.log(owner);
+            //.lookup('model:people');
+            console.log();
+          }
+        })
+
+        var service = App.StoreService.create();
+        service.createRecord();
+
+    </script>
+
+</body>
+</html>

@@ -19,7 +19,20 @@ module.exports = function(defaults) {
   // modules that you would like to import into your application
   // please specify an object with the list of modules as keys
   // along with the exports of each module as its value.
-  
+  app.import({
+      development : 'bower_components/moment/min/moment-with-locales.js',
+      production  : 'bower_components/moment/min/moment-with-locales.min.js'
+  });
+  app.import('bower_components/pikaday/pikaday.js');
+  app.import('bower_components/pikaday/css/pikaday.css');
+
+  app.import('vendor/shims/moment.js');
+  app.import('vendor/shims/pikaday.js');
+
+  // app.import({
+  //       development : 'bower_components/pikaday/pikaday.js',
+  //       production  : 'bower_components/pikaday/pikaday.js'
+  // });
 
   return app.toTree();
 };

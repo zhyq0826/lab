@@ -34,6 +34,7 @@ Router.map(function() {
     this.route('demo-action', function(){
         
     });
+    this.route('ui-date-input');
 });
 
 export default Router;

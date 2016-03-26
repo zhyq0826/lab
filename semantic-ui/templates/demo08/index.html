@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link rel="stylesheet" href="../../css/semantic.css">
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script src="../../js/semantic.js" ></script>
+</head>
+<body>
+    <div class="ui container">
+      <div class="ui animation selection dropdown" tabindex="0">
+        <input type="hidden" name="transition" value="vertical flip">
+        <div class="text">Vertical Flip</div>
+        <i class="dropdown icon"></i>
+        <div class="menu transition hidden" tabindex="-1">
+          <div class="item">Horizontal Flip</div>
+          <div class="item active selected">Vertical Flip</div>
+          <div class="item">Fade Up</div>
+          <div class="item">Fade</div>
+          <div class="item">Scale</div>
+        </div>
+      </div>
+    </div>
+    <div class="ui test modal">
+      test
+    </div>
+
+    <script type="text/javascript">
+        $('.selection.dropdown')
+          .dropdown({
+            onChange: function(value) {
+              $('.test.modal').modal('setting', 'transition', value).modal('show');
+            }
+          })
+    </script>
+</body>
+</html>
+
