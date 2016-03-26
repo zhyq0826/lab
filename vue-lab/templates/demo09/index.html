@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/vue.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Local-Registration</h1>
+    <div id="example">
+        <my-parent></my-parent>
+    </div>
+    <script type="text/javascript">
+        var Child = Vue.extend({
+            template: '<div>{{ message }}</div>',
+            data: function(){
+                return {
+                    message: 'i am child component in parent'
+                }
+            }
+        })
+
+        var Parent = Vue.extend({
+          template: '<h1>I am parent template</h1><child-component></child-component>',
+          components: {
+            'child-component': Child
+          }
+        });
+
+        Vue.component('my-parent', Parent);
+
+        new Vue({
+            el: '#example',
+        })
+    </script>
+</body>
+</html>

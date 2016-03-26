@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/vue.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <h1>is</h1>
+    <div id="example">
+        <table>
+          <tr>
+            <td is="my-parent" ></td>
+          </tr>
+        </table>
+    </div>
+    <script type="text/javascript">
+        var Parent = Vue.extend({
+          template: '<td>I am custome td</td>',
+        });
+
+        Vue.component('my-parent', Parent);
+
+        new Vue({
+            el: '#example',
+        })
+    </script>
+</body>
+</html>
