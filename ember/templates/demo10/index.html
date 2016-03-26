@@ -17,7 +17,10 @@
 </head>
 <body>
     <p>
-      external value means to this object context is outside of the component
+      组件中使用this.value 和 this.attrs.value 的区别, 
+    </p>
+    <p>
+      只要组件的调用者传递value到组件，该value 就可以在attrs 上使用，并且是一个 Object {value: undefined, update: function, MUTABLE_CELL [id=__ember14590069877961027428597005]: true}
     </p>
     <script type="text/x-handlebars" data-template-name="application">
         <h1>application</h1>
@@ -58,14 +61,11 @@
           },
           didInitAttrs: function(){
             this.log('didInitAttrs');
-            console.log(this.external);
-            console.log(this.attrs.external);
-            //console.log(this.attrs.external);
+            console.log('external==>', this.external);
+            console.log('attrs.external==>', this.attrs.external);
           },
           didUpdateAttrs: function(){
             this.log('didUpdateAttrs');
-            //console.log(this.external);
-            //console.log(this.attrs.external);
           },
           willUpdate: function(){
             this.log('willUpdate');

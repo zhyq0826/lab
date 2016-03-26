@@ -19,6 +19,48 @@
     <p>
       service getOwner
     </p>
+    <p>
+      <pre>
+        /**
+        Framework objects in an Ember application (components, services, routes, etc.)
+        are created via a factory and dependency injection system. Each of these
+        objects is the responsibility of an "owner", which handled its
+        instantiation and manages its lifetime.
+      
+        `getOwner` fetches the owner object responsible for an instance. This can
+        be used to lookup or resolve other class instances, or register new factories
+        into the owner.
+      
+        For example, this component dynamically looks up a service based on the
+        `audioType` passed as an attribute:
+      
+        ```
+        // app/components/play-audio.js
+        import Ember from 'ember';
+      
+        // Usage:
+        //
+        //   {{play-audio audioType=model.audioType audioFile=model.file}}
+        //
+        export default Ember.Component.extend({
+          audioService: Ember.computed('audioType', function() {
+            let owner = Ember.getOwner(this);
+            return owner.lookup(`service:${this.get('audioType')}`);
+          }),
+          click() {
+            let player = this.get('audioService');
+            player.play(this.get('audioFile'));
+          }
+        });
+        ```
+      
+        @method getOwner
+        @param {Object} object A object with an owner.
+        @return {Object} an owner object.
+        @for Ember
+        @public
+        </pre>
+    </p>
     <script type="text/x-handlebars" data-template-name="application">
         <h1>application</h1>
     </script>      
@@ -48,11 +90,9 @@
         });
 
         App.StoreService = Ember.Service.extend({
-          createRecord(){
+          createRecord: function(){
             var owner = Ember.getOwner(this);
             console.log(owner);
-            //.lookup('model:people');
-            console.log();
           }
         })
 

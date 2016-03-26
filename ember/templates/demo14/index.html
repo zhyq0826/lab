@@ -16,24 +16,17 @@
   </script>
 </head>
 <body>
-    <p>
-      component hasBlock can not use in component directily, must hack it use Ember.computed.bool('template').readOnly()
-    </p>
-    <p>
-      组件的js 中无法使用hasBlock
-    </p>
+  <p>
+    closure action 传递参数使用柯里化
+  </p>
     <script type="text/x-handlebars" data-template-name="application">
         <h1>application</h1>
-        {{x-people}}
-        {{#x-people}}{{/x-people}}
-        {{#x-people}}something{{/x-people}}
+        {{x-people action=(action "log") }}
+        {{x-people action=(action "log" "template message") }}
     </script>
       
     <script type="text/x-handlebars" data-template-name="components/x-people">
         <h1>x component {{elementId}}</h1>
-        {{#if hasBlock}}
-          hasBlock
-        {{/if}}
     </script>
     
 
@@ -43,11 +36,15 @@
           LOG_VIEW_LOOKUPS: true
         });
 
+        App.ApplicationController = Ember.Controller.extend({
+          actions: {
+            log: function(){
+              console.log([].slice.apply(arguments, [0, arguments.length]).join('=='))
+            }
+          }
+        });
+
         App.PeopleMixin = Ember.Mixin.create({
-          didInsertElement:function(){
-            this._super.apply(this, arguments);
-            this.log();
-          },
           log: function(action){
             console.log(this.elementId+'==>'+this.hasBlock);
           },
@@ -55,11 +52,13 @@
             this._super.apply(this, arguments);
             this.log();
           },
-          hasBlock: Ember.computed.bool('template').readOnly()
+          click: function(e){
+            this.attrs.action('component msg');
+          }
         })
 
         App.XPeopleComponent = Ember.Component.extend(App.PeopleMixin,{
-          internal: 'internal',
+
         });
 
     </script>

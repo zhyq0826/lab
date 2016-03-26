@@ -19,6 +19,9 @@
     <p>
       external value means to this object context is outside of the component
     </p>
+    <p>
+      internal value means to this object context is inside of the component
+    </p>
     <script type="text/x-handlebars" data-template-name="application">
         <h1>application</h1>
         {{x-people external=value }}
@@ -63,8 +66,8 @@
           },
           didInitAttrs: function(){
             this.log('didInitAttrs');
-            console.log(this.external);
-            console.log(this.attrs.external);
+            console.log('external==>', this.external);
+            console.log('attrs.external', this.attrs.external);
             //console.log(this.attrs.external);
           },
           didUpdateAttrs: function(){
