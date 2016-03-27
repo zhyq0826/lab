@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/vue.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <h1>props</h1>
+    <div id="example">
+        <input v-model="bindMsg">
+    </div>
+    <script type="text/javascript">
+        var Parent = Vue.extend({
+              props: {
+                // basic type check (`null` means accept any type)
+                propA: Number,
+                // a required string
+                propB: {
+                  type: String,
+                  required: true
+                },
+                // a number with default value
+                propC: {
+                  type: Number,
+                  default: 100
+                },
+                // object/array defaults should be returned from a
+                // factory function
+                propD: {
+                  type: Object,
+                  default: function () {
+                    return { msg: 'hello' }
+                  }
+                },
+                // indicate this prop expects a two-way binding. will
+                // raise a warning if binding type does not match.
+                propE: {
+                  twoWay: true
+                },
+                // custom validator function
+                propF: {
+                  validator: function (value) {
+                    return value > 10
+                  }
+                },
+                // coerce function (new in 1.0.12)
+                // cast the value before setting it on the component
+                propG: {
+                  coerce: function (val) {
+                    return val + '' // cast the value to string
+                  }
+                },
+                propH: {
+                  coerce: function (val) {
+                    return JSON.parse(val) // cast the value to Object
+                  }
+                }
+              }
+        });
+
+        Vue.component('my-component', Parent);
+
+        new Vue({
+            el: '#example',
+            data: function  (argument) {
+                return {'bindMsg': 'init'};
+            }
+        })
+    </script>
+</body>
+</html>

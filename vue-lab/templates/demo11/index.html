@@ -8,17 +8,28 @@
 <body>
     <h1>props</h1>
     <div id="example">
+        <input v-model="bindMsg">
 
+        <my-parent msg='vuejs' my-message='my messae' v-bind:bind-msg="bindMsg" ></my-parent>
+        
+        <h1>Prop-Bindings</h1>
+        <my-parent :bind-msg.sync="bindMsg"></my-parent>
+        <!-- explicit one-time binding -->
+        <my-parent :bind-msg.once="bindMsg"></my-parent>
     </div>
     <script type="text/javascript">
         var Parent = Vue.extend({
-          template: '<p>I am</p>',
+            template: '<p>hello {{msg}}</p><p>{{myMessage}}</p><p>{{bindMsg}}</p>',
+            props: ['msg', 'myMessage', 'bindMsg'],
         });
 
         Vue.component('my-parent', Parent);
 
         new Vue({
             el: '#example',
+            data: function  (argument) {
+                return {'bindMsg': 'init'};
+            }
         })
     </script>
 </body>
