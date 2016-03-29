@@ -3,9 +3,41 @@
   <head>
     <meta charset="utf-8">
     <title>vue-webpack-simple</title>
+    <link rel="stylesheet" type="text/css" href="vendor/semantic.min.css">
   </head>
   <body>
-    <app></app>
+    <div class="ui bottom attached segment pushable">
+        <div class="ui visible left vertical sidebar menu">
+            <a class="item">
+              <i class="tasks icon"></i>
+              Task
+            </a>
+            <a class="item">
+              <i class="code icon"></i>
+              Article
+            </a>
+            <a class="item">
+              <i class="user icon"></i>
+              User
+            </a>
+            <a class="item">
+              <i class="settings icon"></i>
+              My
+            </a>
+        </div>
+        <div class="ui top fixed menu">
+        ...
+        </div>
+        <div class="pusher">
+            <div class="ui basic segment">
+              <h3 class="ui header">Application Content</h3>
+              <p></p>
+              <p></p>
+              <p></p>
+              <p></p>
+            </div>
+        </div>
+    </div>
     <script src="dist/build.js"></script>
   </body>
 </html>
