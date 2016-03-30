@@ -72,6 +72,16 @@
         }).finally(function(data){
             console.log('promise_fail finally: '+data); //exec
         })
+
+        var new_promise = getJSON('data.json');
+        new_promise.then(function(data){
+            return {'data': data, 'new_promise': getJSON('data.json')};
+        }).then(function(data){
+            console.log(data.data);
+            return data.new_promise
+        }).then(function(data){
+            console.log(data);
+        })
     </script>
 </body>
 </html>

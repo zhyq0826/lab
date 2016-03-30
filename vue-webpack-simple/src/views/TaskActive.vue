@@ -1,15 +1,9 @@
 <template>
-    <div class="ui red three item menu">
-      <a class="active item">
-        Home
-      </a>
-      <a class="item">
-        Messages
-      </a>
-      <a class="item">
-        Friends
-      </a>
-    </div>
+  <ul>
+    <li>
+      active
+    </li>
+  </ul>
 </template>
 <script>
     export default {
@@ -26,9 +20,5 @@
 </script>
 
 <style lang='less'>
-  .m-siderbar {
-    box-shadow: none !important;
-    border-top: none !important;
-    border-bottom: none !important;
-  }
+  
 </style>
