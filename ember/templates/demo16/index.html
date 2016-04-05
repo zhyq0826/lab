@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script type="text/javascript" src="../../js/ember-template-compiler.js" ></script>
+    <script type="text/javascript" src="../../js/ember.js" ></script>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <script>
+    EmberENV = {
+      FEATURES: {
+        'ember-htmlbars': true,
+        'ember-htmlbars-block-params': true
+      }
+    }
+  </script>
+</head>
+<body>
+    <p>
+        <pre>
+            <code>
+              {{#x-people people=people as |c p|}}
+                Hello {{c.firstName}} {{c.lastName}} {{p}}
+              {{/x-people}}
+            </code>
+        </pre>
+        c is component x-people scope context variable
+    </p>
+    <script type="text/x-handlebars" data-template-name="application">
+      <h1>horsin around</h1>
+      {{#x-people people=people as |c| }}
+        <i class="{{c.icon}} icon" >{{c.firstName}}</i>
+      {{/x-people}}
+    </script>
+      
+    <script type="text/x-handlebars" data-template-name="components/x-people">
+      <ul>
+        {{#each people as |c|}}
+          <li>{{yield c}}</li>
+        {{/each}}
+      </ul>
+    </script>
+
+    <script>
+        App = Ember.Application.create({
+          LOG_TRANSITIONS: true,
+          LOG_VIEW_LOOKUPS: true
+        });
+
+        App.ApplicationController = Ember.Controller.extend({
+            people: [
+              {firstName: 'Kris', lastName: 'Selden', 'icon': 'browser'},
+              {firstName: 'Luke', lastName: 'Melia', 'icon': 'code'},
+              {firstName: 'Formerly Alex', lastName: 'Matchneer', 'icon': 'home'}
+            ]
+        });
+
+        App.XPeopleComponent = Ember.Component.extend({
+          
+        });
+
+    </script>
+
+</body>
+</html>

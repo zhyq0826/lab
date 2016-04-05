@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link rel="stylesheet" href="../../css/semantic.css">
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script src="../../js/semantic.js" ></script>
+    <style type="text/css">
+      .container {
+        margin-bottom: 20px;
+      }
+      .example06 .popup {
+          color: #FF0000;
+      }
+    </style>
+</head>
+<body>
+  <div class="ui container example01">
+    <div class="ui icon button" data-content="Add users to your feed">
+      <i class="add icon"></i>
+    </div>
+  </div>
+
+  <div class="ui container example02">
+    <p class="ui message">
+      Using the setting inline: true will let Semantic know to display the next sibling ui popup element after the activator
+    </p>
+    <div class="ui menu">
+      <a class="browse item">
+        Browse
+        <i class="dropdown icon"></i>
+      </a>
+      <div class="ui fluid popup bottom left transition hidden" style="top: 554px; left: 1px; bottom: auto; right: auto; width: 960px;">
+        <div class="ui four column relaxed divided grid">
+          <div class="column">
+            <h4 class="ui header">Fabrics</h4>
+            <div class="ui link list">
+              <a class="item">Cashmere</a>
+              <a class="item">Linen</a>
+              <a class="item">Cotton</a>
+              <a class="item">Viscose</a>
+            </div>
+          </div>
+          <div class="column">
+            <h4 class="ui header">Size</h4>
+            <div class="ui link list">
+              <a class="item">Small</a>
+              <a class="item">Medium</a>
+              <a class="item">Large</a>
+              <a class="item">Plus Sizes</a>
+            </div>
+          </div>
+          <div class="column">
+            <h4 class="ui header">Colors</h4>
+            <div class="ui link list">
+              <a class="item">Neutrals</a>
+              <a class="item">Brights</a>
+              <a class="item">Pastels</a>
+            </div>
+          </div>
+          <div class="column">
+            <h4 class="ui header">Types</h4>
+            <div class="ui link list">
+              <a class="item">Knitwear</a>
+              <a class="item">Outerwear</a>
+              <a class="item">Pants</a>
+              <a class="item">Shoes</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <a class="item">
+        <i class="cart icon"></i>
+        Checkout
+      </a>
+    </div>
+  </div>
+
+  <div class="ui container example03">
+    <h3>
+      Specifying a selector for a popup
+    </h3>
+    <p>
+      Using a Pre-existing Popup Anywhere
+    </p>
+    <p>
+      If its not possible to include the popup content as the next sibling, you can also specify a custom selector to help link the popup contents to its activator.
+    </p>
+    <div class="ui message">
+      Using an inline popup may require specifying a min-width on your popup, if your popup content will appear outside the boundaries of its parent element.
+    </div>
+    <div class="some-wrapping-div">
+      <div class="ui custom button">Show custom popup</div>
+    </div>
+    <div class="ui custom popup top left transition hidden">
+      I'm not on the same level as the button, but i can still be found.
+    </div>
+  </div>
+
+  <div class="ui container example04">
+      <h3>Specifying a trigger event</h3>
+      <p>
+        Event used to trigger popup. Can be either `focus`, `click`, `hover`, or `manual`. Manual popups must be triggered with $('.element').popup('show');
+      </p>
+      <div class="ui teal button" data-title="Using click events" data-content="Clicked popups will close if you click away, but not if you click inside the popup">Click Me</div>
+      <div class="ui icon input">
+        <input type="text" placeholder="Focus me..." data-content="You can use me to enter data" class="">
+        <i class="search icon"></i>
+      </div>
+  </div>
+
+  <div class="ui container example05">
+    <h3>target element</h3>
+    <p>
+      A popup can specify a different target element than itself to show a popup
+    </p>
+    <div class="ui green test button">Hover Me</div>
+    <div class="ui divider"></div>
+    <img class="medium ui test image" src="https://www.baidu.com/img/bd_logo1.png">
+  </div>
+
+  <div class="ui container example06">
+    <div class="ui warning message">
+      Using inline will allow your popups to go places other popups can't go, like inside fixed or absolutely positioned elements
+    </div>
+    <div class="ui warning message">
+      If you want to style each popup individually it makes sense to keep popup inline: true. If you are worried that your pop up might mistakingly inherit styles that it shouldn't, you should set inline: false.
+    </div>
+    <i class="heart circular icon link" data-content="This is a child element to the page's body and will not be styled"></i>
+    <i class="mail inline circular icon link" data-content="This popup was inserted inline and will be styled"></i>
+    <div class="ui popup top left transition hidden"><div class="content">This popup was inserted inline and will be styled</div></div>
+  </div>
+
+  <div class="ui container example07">
+    <h3>Positioning</h3>
+    <div class="ui segment">
+      <i class="square inverted red heart icon link" data-content="Top Left" data-position="top left"></i>
+      <i class="square inverted red heart icon link" data-content="Top Center" data-position="top center"></i>
+      <i class="square inverted red heart icon link" data-content="Top Right" data-position="top right"></i>
+      <i class="square inverted red heart icon link" data-content="Right Center" data-position="right center"></i>
+      <i class="square inverted red heart icon link" data-content="Bottom Right" data-position="bottom right"></i>
+      <i class="square inverted red heart icon link" data-content="Bottom Center" data-position="bottom center"></i>
+      <i class="square inverted red heart icon link" data-content="Bottom Left" data-position="bottom left"></i>
+      <i class="square inverted red heart icon link" data-content="Left Center" data-position="left center"></i>
+    </div>
+  </div>
+
+  <div class="ui container example08">
+    <h3>Specifying an offset</h3>
+    <i class="heart circular icon link" data-offset="50" data-content="As expected this popup is way off to the right"></i>
+  </div>
+
+  <div class="ui container example09">
+    <h3>Transitions</h3>
+    <i class="large demo home circular link icon" data-title="Home" data-content="The place where you keep your dog"></i>
+    home
+  </div>
+
+  <div class="ui container example10">
+    <h3>A fluid popup will take up the entire width of its offset container</h3>
+    <div class="ui button">Show fluid popup</div>
+    <div class="ui fluid popup top left transition hidden">
+        <div class="ui four column divided center aligned grid">
+          <div class="column">1</div>
+          <div class="column">2</div>
+          <div class="column">3</div>
+          <div class="column">4</div>
+        </div>
+    </div>
+  </div>
+
+  <div class="ui container example11">
+    <div class="ui button">Show flowing popup</div>
+    <div class="ui flowing popup top left transition hidden">
+      <div class="ui three column divided center aligned grid">
+        <div class="column">
+          <h4 class="ui header">Basic Plan</h4>
+          <p><b>2</b> projects, $10 a month</p>
+          <div class="ui button">Choose</div>
+        </div>
+        <div class="column">
+          <h4 class="ui header">Business Plan</h4>
+          <p><b>5</b> projects, $20 a month</p>
+          <div class="ui button">Choose</div>
+        </div>
+        <div class="column">
+          <h4 class="ui header">Premium Plan</h4>
+          <p><b>8</b> projects, $25 a month</p>
+          <div class="ui button">Choose</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ui container example12">
+    <button class="ui button form" >show form</button>
+    <div class="ui flowing popup bottom right transition hide">
+      <div class="ui container">
+        <div class="ui form">
+          <div class="field">
+            <label for="">reason</label>
+            <select name="" id=""></select>
+          </div>
+          <div class="fiedl">
+            <textarea name="" id="" cols="30" rows="10"></textarea>
+          </div>
+          <button class="ui button save" >save</button>
+          <button class="ui button cancel" >cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+    <script type="text/javascript">
+      $('.example01 .button').popup({
+          inline   : true,
+          hoverable: true,
+          position : 'bottom left',
+          delay: {
+            show: 300,
+            hide: 800
+          }
+      });
+
+      $('.example02 .menu .browse').popup({
+          inline   : true,
+          hoverable: true,
+          position : 'bottom left',
+          delay: {
+            show: 300,
+            hide: 800
+          }
+        });
+
+      $('.example03 .button').popup({
+        popup : $('.custom.popup'),
+        on:'click'
+      });
+
+      $('.example04 .teal.button').popup({
+          on: 'click'
+      });
+
+      $('.example04 input').popup({
+          on: 'focus'
+      });
+
+      $('.example05 .test.button').popup({
+        position : 'right center',
+        target   : '.example05 .test.image',
+        title    : 'My favorite dog',
+        content  : 'My favorite dog would like other dogs as much as themselves'
+      });
+
+      $('.example06 .inline.icon').popup({
+          inline: true
+      });
+
+      $('.example06 .heart.icon').popup({
+          inline: false
+      });
+
+      $('.example07 .icon').popup();
+
+      $('.example08 .icon').popup();
+
+      $('.example09 .icon').popup({transition: 'fade up'}).popup('toggle');
+      $('.example10 .button').popup({
+        popup: '.example10 .popup',
+        on: 'click'
+      });
+
+      $('.example11 .button').popup({
+        popup: '.example11 .popup',
+        on: 'click'
+      });
+
+      $(".example12 .button.form").popup({
+        hoverable: true,
+        popup: '.example12 .popup'
+      });
+
+      $(".example12 .form .button").on("click", function(){
+        $(".example12 .button.form").popup('hide')
+      });
+
+    </script>
+</body>
+</html>
+
