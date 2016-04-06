@@ -212,6 +212,10 @@
     </div>
   </div>
 
+  <div class="ui container example13">
+    <button class="ui button" >show popup</button>
+  </div>
+
 
     <script type="text/javascript">
       $('.example01 .button').popup({
@@ -284,6 +288,12 @@
 
       $(".example12 .form .button").on("click", function(){
         $(".example12 .button.form").popup('hide')
+      });
+
+      $(".example13 .button").popup({
+        hoverable: true,
+        title: 'title',
+        content: 'content'
       });
 
     </script>

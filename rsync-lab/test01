@@ -1,0 +1,10 @@
+rsync -t --progress --bwlimit=10 '-e ssh -p 22'  err.log username@host:/home/username/.
+
+-z, --compress 对备份的文件在传输时进行压缩处理
+-a, --archive 归档模式，表示以递归方式传输文件，并保持所有文件属性，等于-rlptgoD
+-v, --verbose 详细模式输出
+--bwlimit=KBPS 限制I/O带宽，KBytes per second
+
+ls -Slrh
+
+sudo docker run -ti --name testmongodb  -v /var/lib/mongodb:/var/lib/mongodb mongodb/3.2:v0.0.1
