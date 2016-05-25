@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link rel="stylesheet" href="../../css/semantic.css">
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script src="../../js/semantic.js" ></script>
+    <style type="text/css">
+      .container {
+        margin-bottom: 20px;
+      }
+      .example06 .popup {
+          color: #FF0000;
+      }
+    </style>
+</head>
+<body>
+  <div class="ui container">
+    <div class="ember-view ui progress" id="example01">
+      <div class="bar">
+        <div class="progress"></div>
+      </div>
+      <div class="label">Uploading Files</div>
+    </div>
+  </div>
+
+
+    <script type="text/javascript">
+        $('#example01').progress({
+            percent: 10
+        });
+    </script>
+</body>
+</html>
+

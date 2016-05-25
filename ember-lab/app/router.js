@@ -35,6 +35,7 @@ Router.map(function() {
         
     });
     this.route('ui-date-input');
+    this.route('file-input');
 });
 
 export default Router;
