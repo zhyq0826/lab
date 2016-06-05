@@ -40,37 +40,41 @@
         promise_success.then(function(data){
             return data;
         }).catch(function(data){
-            console.log('promise_success catch: '+data+' no any catch exec after this catch');
+            console.log('promise_success 1 catch: '+data+'');
         }).finally(function(data){
             console.log('promise_success finally: '+data);
+        }).then(function(data){
+            console.log('promise_success 2 then: '+data);
         });
 
         promise_success.then(function(data){
             return data;
         }).catch(function(data){
-            console.log('promise_success chain catch : '+data); //no exec
+            console.log('promise_success 1 catch : '+data); //exec
         }).then(function(data){
-            console.log('promise_success chain then resolve: '+data.user); //user
+            console.log('promise_success 2 then: '+data.user); //user
         }).then(function(data){
-            console.log('promise_success chain then resolve: '+data); //undefined
+            console.log('promise_success 3 then: '+data); //undefined
         }).catch(function(data){
-            console.log('promise_success chain catch : '+data); //no exec
+            console.log('promise_success 2 catch: '+data); //exec
+        }).then(function(data){
+            console.log('promise_success 4 then: '+data);
         });
         
 
         promise_fail.then(function(data){
-            console.log('promise_fail success handler : '+data); //no exec
+            console.log('promise_fail 1 then : '+data); //no exec
             return '404 not found'; //no exec
         }, function(reason){
-            console.log('promise_fail fail handler : '+data); //no exec
+            console.log('promise_fail 1 catch : '+data); //no exec
         }).finally(function(){
-            console.log(data);   //no exec
+            console.log('promise_fail 2 finally: '+ data); //no exec
         }).then(function(data){
-            console.log('promise_fail success chain catch : '+data); //no exec
+            console.log('promise_fail 2 then : '+data); //no exec
         }).catch(function(reason){
-            console.log('promise_fail chain catch : '+data); //no exec
+            console.log('promise_fail 2 catch : '+data); //no exec
         }).finally(function(data){
-            console.log('promise_fail finally: '+data); //exec
+            console.log('promise_fail last finally: '+data); //exec
         })
 
         var new_promise = getJSON('data.json');
