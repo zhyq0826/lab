@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+
+{% block body %}
+
+<div class="ui  container" >
+    <div class="ui grid" >
+        <div class="fourteen wide column" >
+        </div>
+        <div class="two wide column" >
+            <a href="{{url_for('task_new')}}" class="ui positive button " >
+                <i class="cube icon" ></i>
+                创建任务
+            </a>
+        </div>
+    </div>
+</div>
+
+<table class="ui sortable celled table">
+    <thead>
+        <tr>
+          <th>数据类型</th>
+          <th class="sorted descending">数据源</th>
+          <th class="">名称</th>
+          <th>标签</th>
+          <th class="">任务状态</th>
+          <th colspan="2" >最近一次执行</th>          
+          <th>关联的model</th>
+          <th>执行频率</th>
+          <th>结果统计</th>
+          <th>路径映射</th>
+          <th>动作</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+          <td>音频</td>
+          <td><a href="http://baidu.com" >music.baidu.com</a></td>
+          <td>百度音乐</td>
+          <td><a href="{{url_for('task')}}?tag=music" class="ui tag label">music</a></td>
+          <td>
+            <a class="ui green label">running</a>
+          </td>
+          <td>
+            2015-07-15 23:00
+          </td>
+          <td>
+            <a class="ui green label">success</a>
+          </td>
+          <td>hotel</td>
+          <td>24 h</td>
+          <td> <a href="" class="ui primary button" >查看</a></td>
+          <td><a href="" class="ui button" >编辑</a></td>
+          <td>
+              <button class="negative ui button" >stop</button>
+          </td>
+        </tr>
+        <tr>
+          <td>图文</td>
+          <td><a href="http://new.baidu.com">news.baidu.com</a></td>
+          <td>百度新闻</td>
+          <td><a href="{{url_for('task')}}?tag=nes" class="ui tag label">news</a></td>
+          <td>
+            <a class="ui red label">stop</a>
+          </td>
+          <td>
+            2015-07-15 23:00
+          </td>
+          <td>
+            <a class="ui red label">failed</a>
+          </td>
+          <td>hotel</td>
+          <td>24 h</td>
+          <td> <a href="" class="ui primary button" >查看</a></td>
+          <td><a href="" class="ui button" >编辑</a></td>
+          <td>
+              <button class="positive ui button" >active</button>
+          </td>
+        </tr>
+    </tbody>
+</table>
+
+{% endblock %}
+
+
+{% block script %}
+
+
+{% endblock %}

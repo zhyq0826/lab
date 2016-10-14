@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+
+{% block body %}
+
+<div class="ui text container" >
+    <div class="ui two column centered grid" >
+        <div class="column" >
+            <h3 class="ui dividing header" >create new task</h3>
+            <form class="ui form" method="post" action="{{url_for('task_new')}}" >
+                <div class="field">
+                    <label>数据类型</label>
+                    <select id="select-beast" name="type" >
+                        <option value=""></option>
+                        <option value="AF">pic</option>
+                        <option value="AX">audio </option>
+                        <option value="AL">video</option>
+                        <option value="DZ">other</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>数据源</label>
+                    <input type="url" name="source" >
+                </div>
+                <div class="field">
+                    <label>名称</label>
+                    <input type="text" name="name" >
+                </div>
+                <div class="field">
+                    <label>标签</label>
+                    <input type="text" id="input-tags" name="tag">
+                </div>
+
+                <div class="field">
+                    <label>执行频率</label>
+                    <select class="ui search dropdown" name="timer" >
+                        <option value=""></option>
+                        <option value="AF">1 h</option>
+                        <option value="AX">2 h</option>
+                        <option value="AL">3 h</option>
+                        <option value="DZ">6 h</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>关联model</label>
+                    <select id="select-model" name="model" >
+                    </select>
+                </div>
+
+              <button class="ui button" type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+
+{% block script %}
+
+<script type="text/javascript">
+    
+    $('#input-tags').selectize({
+        delimiter: ',',
+        persist: false,
+        create: function(input) {
+            return {
+                value: input,
+                text: input
+            }
+        }
+    });
+
+    $('#select-beast').selectize({
+        create: true,
+        sortField: 'text'
+    });
+
+    $('#select-model').selectize({
+        valueField: 'id',
+        labelField: 'name',
+        searchField: 'name',
+        options: [],
+        create: false,
+        render: {
+            option: function(item, escape){
+                return '<div>'+item.name+'</div>';
+            }
+        },
+        load: function(query, callback) {
+            var that = this;
+            if (!query.length) return callback();
+            $.ajax({
+                url: '/static/model.json',
+                type: 'GET',
+                dataType: 'json',
+                data: {
+                    q: query,
+                    page_limit: 10,
+                },
+                error: function(res) {
+                    callback();
+                },
+                success: function(res) {
+                    callback(res);
+                }
+            });
+        }
+    });
+
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="">
+    <title>hello</title>
+
+    <link href="{{url_for('static', filename='lib/semantic.min.css')}}" rel="stylesheet">
+    <link href="{{url_for('static', filename='lib/font-awesome.css')}}" rel="stylesheet" type="text/css">
+    <link href="{{url_for('static', filename='lib/selectize.css')}}" rel="stylesheet" type="text/css">
+{% block style %}
+
+{% endblock %}
+
+<style type="text/css">
+    
+    .ui.grid {
+        margin: 0;
+    }
+
+</style>
+</head>
+<body>
+    <div class="ui container" >
+        <h1 class="ui center aligned header" >
+            wecatch webcrawl
+        </h1>
+        <div class="ui dividing"></div>
+        {% include "nav.html" %}
+    </div>
+    {% block body %}
+    
+    {% endblock %}
+    <script type="text/javascript" src="{{url_for('static', filename='lib/jquery-2.1.4.min.js')}}" ></script>
+    <script type="text/javascript" src="{{url_for('static', filename='lib/semantic.min.js')}}" ></script>
+    <script type="text/javascript" src="{{url_for('static', filename='lib/selectize.js')}}" ></script>
+    {% block script %}
+
+    {% endblock %}
+</body>
+</html>
