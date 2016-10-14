@@ -1,0 +1,25 @@
+---
+
+- name: test ping jxqctm use playbook
+  hosts: all
+  remote_user: root
+  tasks:
+  - name: ensure jxqctm connection success
+    ping:
+    remote_user: root
+    notify:
+    - status
+  handlers:
+    - name: status
+      shell: "echo status>>t.py"
+      remote_user: root
+
+- name: echo text to t.py in remote machine
+  hosts: all
+  remote_user: root
+  tasks:
+  - name: echo text to jxqctm
+    shell: "echo test>>t.py"
+    remote_user: root
+
+...
