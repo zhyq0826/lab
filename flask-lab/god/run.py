@@ -8,6 +8,9 @@ from flask import (
     flash
 )
 
+from werkzeug.contrib.fixers import ProxyFix
+
+
 
 app = Flask(__name__, template_folder='templates', static_folder='static', static_path='/static')
 app.debug = True
@@ -26,6 +29,9 @@ def task_new():
         return render_template('task_new.html')
     else:
         return redirect(url_for('task'))
+
+
+app.wsgi_app = ProxyFix(app.wsgi_app)
 
 
 if __name__ == '__main__':
