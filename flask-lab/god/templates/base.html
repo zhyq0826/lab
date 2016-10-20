@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="description" content="">
-    <title>hello</title>sql
+    <title>hello</title>
 
     <link href="{{url_for('static', filename='lib/semantic.min.css')}}" rel="stylesheet">
     <link href="{{url_for('static', filename='lib/font-awesome.css')}}" rel="stylesheet" type="text/css">
@@ -23,9 +23,11 @@
 </style>
 </head>
 <body>
-    {% block body %}
-    
-    {% endblock %}
+    <div style="margin: 0 auto;width: 960px">
+        {% block body %}
+            
+        {% endblock %}
+    </div>
     <script type="text/javascript" src="{{url_for('static', filename='lib/jquery-2.1.4.min.js')}}" ></script>
     <script type="text/javascript" src="{{url_for('static', filename='lib/semantic.min.js')}}" ></script>
     <script type="text/javascript" src="{{url_for('static', filename='lib/selectize.js')}}" ></script>

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+
+{% block body %}
+    
+    <div class="ui grid">
+        <div class="row">
+            <a href="/post" class="ui button green" >new</a>
+        </div>
+    </div>
+
+    <div class="ui items">
+        {% for item in result %}
+        <div class="item">
+            <div class="content">
+                <div class="header">
+                    {{ item.title }}
+                </div>
+                <div class="description">
+                    {{item.text}}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+{% endblock %}

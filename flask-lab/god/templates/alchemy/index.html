@@ -9,14 +9,16 @@
         </div>
     </div>
 
-    <div class="ui list">
+    <div class="ui items">
         {% for item in result %}
         <div class="item">
-            <div class="header">
-                {{ item[1] }}
-            </div>
             <div class="content">
-                {{item[2]}}
+                <div class="header">
+                    <a href="/post/{{item.id}}">{{ item.title }}</a>
+                </div>
+                <div class="description">
+                    {{item.text}}
+                </div>
             </div>
         </div>
         {% endfor %}

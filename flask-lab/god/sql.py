@@ -42,13 +42,13 @@ def show_entries():
         result = cursor.fetchall()
 
     print(result)
-    return render_template('blog.html', result=result)
+    return render_template('sql/index.html', result=result)
 
 
 @app.route('/post', methods=['POST', 'GET'])
 def post_entry():
     if request.method == 'GET':
-        return render_template('blog_new.html')
+        return render_template('sql/post.html')
     else:
         db = get_db()
         with db.cursor() as cursor:

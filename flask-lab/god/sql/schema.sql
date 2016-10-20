@@ -21,3 +21,10 @@ create table if not EXISTS entries (
     title text not null,
     `text` text not null
 );
+
+create table if not EXISTS tag (
+    id int unsigned not null auto_increment primary key,
+    name varchar(255) not null
+);
+
+
