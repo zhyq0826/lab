@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+
+{% block body %}
+    
+    <div class="ui feed">
+        {% for item in result %}
+              <div class="event">
+                <a href="http://weibo.com/u/{{item.uid}}" class="label">
+                  <img src="{{item.user.avatar}}">
+                </a>
+                <div class="content">
+                  <div class="summary">
+                    <a class="user">
+                      {{item.user.username}}
+                    </a> {{ item.text }}
+                    <div class="date">
+                      1 Hour Ago
+                    </div>
+                  </div>
+                  <div class="meta">
+                    <a class="like">
+                      <i class="like icon"></i> {{item.dig_count}} Likes
+                    </a>
+                  </div>
+                </div>
+              </div>
+        {% endfor %}
+    </div>
+
+    <a href="/joke?page={{current_page-1}}" class="ui button">prev page</a>
+    <a href="/joke?page={{current_page+1}}" class="ui button">next page</a>
+
+    
+{% endblock %}

@@ -19,12 +19,12 @@ class Tag(Base):
 
     __tablename__ = 'tag'
     id = Column(Integer, primary_key=True)
-    name = Column(VARCHAR, nullable=False)
+    name = Column(VARCHAR(255), nullable=False)
 
 
 class User(Base):
 
     __tablename__ = 'user'
     id = Column(Integer, primary_key=True)
-    username = Column(VARCHAR, nullable=False)
-    avatar = Column(VARCHAR, nullable=False)
+    username = Column(VARCHAR(255), nullable=False)
+    avatar = Column(VARCHAR(255), nullable=False)
