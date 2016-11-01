@@ -2,8 +2,12 @@
 
 import realpath
 
-import requests
+from datetime import datetime
 import json
+
+import requests
+import arrow
+
 from db.conn import DBSession
 from models.blog import Entries, User
 
@@ -37,6 +41,18 @@ def init_data():
 
     session.commit()
 
+def test_query_page():
+    now = arrow.get(datetime.now())
+    filter_days = [Entries.atime <  now.replace(days=1).to('local').naive, Entries.atime > now.replace(days=-1).to('local').naive]
+    page_number = 1
+    page_size = 100
+    session = DBSession()
+    while 1:
+        result = session.query(Entries).filter(*filter_days).order_by(Entries.atime.desc()).offset((page_number-1)*page_size).limit(page_size).all()
+        if not result:
+            break
+        print len(result)
+        page_number += 1
 
 if __name__ == '__main__':
-    init_data()
+    test_query_page()
