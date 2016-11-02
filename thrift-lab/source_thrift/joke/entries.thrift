@@ -46,5 +46,16 @@ const i32 MAX_RESULTS = 100;
 
 #in python the return type must be declared as container explicit
 service Joke {
-    list<Entries> query_entries(1:i32 page) throws (1:ErrorException error)
+    list<Entries> query_entries(1:i32 page) throws (1:ErrorException error),
+
+    map<i32, User> query_users() throws (1:ErrorException error),
+
+    set<User> query_hot_users(),
+
+    #syntax error
+    #list query_cold_users(),
+
+    i32 add(1:i32 num1, 2:i32 num2),
+
+    void ping()
 }

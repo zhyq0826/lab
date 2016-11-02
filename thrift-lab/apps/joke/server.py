@@ -15,15 +15,27 @@ from thrift.server import TServer
 
 class JokeHandler:
     def __init__(self):
-        pass
+        self.user = User(userId=123, userName='abc', text='abc')
+        self.entries = Entries(title='abc', text='cedf', atime=1477911967.603579, user=self.user)
 
     def query_entries(self, page):
         try:
-            user = User(userId=123, userName='abc', text='abc')
-            logging.info(user)
-            return [Entries(title='abc', text='cedf', atime=1477911967.603579, user=user)]
+            return [self.entries]
         except Exception, e:
             logging.exception(e)
+
+    def add(self, num1, num2):
+        return num1 + num2
+
+    def query_users(self):
+        return dict({123: self.user})
+
+    def query_hot_users(self):
+        return tuple([self.user])
+
+    def ping(self):
+        print('ping msg')
+
 
 if __name__ == '__main__':
     handler = JokeHandler()

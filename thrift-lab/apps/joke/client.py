@@ -47,9 +47,20 @@ def main():
     # Connect!
     transport.open()
 
+    client.ping()
+
     try:
         result = client.query_entries(1)
-        print('Do you want to know result?')
+        print('Do you want to know query entries?')
+        print(result)
+        result = client.query_users()
+        print('Do you want to know query users?')
+        print(result)
+        result = client.query_hot_users()
+        print('Do you want to know query hot users?')
+        print(result)
+        result = client.add(1, 4)
+        print('Do you want to know 1 and 4 result?')
         print(result)
     except Exception as e:
         print('InvalidOperation: %r' % e)
