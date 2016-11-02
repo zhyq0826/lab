@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-thrift --gen py:new_style entries.thrift
+thrift --gen py source_thrift/joke/entries.thrift

@@ -32,17 +32,17 @@ exception ErrorException {
     2: string msg;
 }
 
-typedef list<User> UserList
-typedef list<Entries> EntriesList
+#typedef list<User> UserList
+#typedef list<Entries> EntriesList
 
 struct EntriesResult {
-    1: EntriesList entries;
+    1: list<Entries> entries;
 }
 
 
 const i32 MAX_RESULTS = 100;
 
 
-service EntriesService {
-    EntriesList query_entries(1:i32 page) throws (1:ErrorException error)
+service Joke {
+    list<Entries> query_entries(1:i32 page) throws (1:ErrorException error)
 }
