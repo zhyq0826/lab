@@ -32,17 +32,19 @@ exception ErrorException {
     2: string msg;
 }
 
-#typedef list<User> UserList
-#typedef list<Entries> EntriesList
+#this has no impact in python
+typedef list<User> UserList
+typedef list<Entries> EntriesList
 
 struct EntriesResult {
-    1: list<Entries> entries;
+    1: EntriesList entries;
 }
 
 
 const i32 MAX_RESULTS = 100;
 
 
+#in python the return type must be declared as container explicit
 service Joke {
     list<Entries> query_entries(1:i32 page) throws (1:ErrorException error)
 }
