@@ -4,17 +4,20 @@ import tornado.web
 import turbo.app
 from turbo import app_config
 from turbo.core.exceptions import ResponseError, ResponseMsg
+from raven.contrib.tornado import SentryMixin
+from raven.contrib.tornado import AsyncSentryClient
 
 
 class MixinHandler(turbo.app.BaseHandler):
     pass
 
 
-class BaseHandler(MixinHandler):
+class BaseHandler(MixinHandler, SentryMixin):
     
     def initialize(self):
         super(BaseHandler, self).initialize()
         self._params = self.parameter
+        self.application.sentry_client = AsyncSentryClient('https://56afd1d7f8f245638d7a017abc5a5252:09e7d3d63dba43d2be71551e4ef40877@sentry.io/113098')
 
     def prepare(self):
         super(BaseHandler, self).prepare()
