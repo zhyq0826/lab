@@ -4,6 +4,7 @@ import realpath
 
 from datetime import datetime
 import json
+import time
 
 import requests
 import arrow
@@ -54,5 +55,23 @@ def test_query_page():
         print len(result)
         page_number += 1
 
+def test_delete():
+    session = DBSession()
+    session.query(Entries).filter(Entries.id==-9).delete()
+
+
+def test_flush():
+    session = DBSession()
+    e = session.query(Entries).filter(Entries.id == 2).first()
+    print e.dig_count
+    e.dig_count += -1
+    session.flush()
+    time.sleep(20)
+    e2 = session.query(Entries).filter(Entries.id == 2).first()
+    print e2.dig_count
+    time.sleep(20)
+    session.commit()
+    session.close()
+
 if __name__ == '__main__':
-    test_query_page()
+    test_flush()
