@@ -10,7 +10,7 @@ import requests
 import arrow
 
 from db.conn import DBSession
-from models.blog import Entries, User
+from models.blog import Entries, User, Tag
 
 
 
@@ -73,5 +73,23 @@ def test_flush():
     session.commit()
     session.close()
 
+def test_session():
+    import sys
+    session = DBSession()
+    tag = Tag(name='tag')
+    session.add(tag)
+    session.commit()
+    tag = Tag(name='tag1')
+    session.add(tag)
+    session.commit()
+    tag = Tag(name='tag2')
+    session.add(tag)
+    session.flush()
+    print tag.id
+    sys.stdout.flush()
+    time.sleep(60)
+
+
+
 if __name__ == '__main__':
-    test_flush()
+    test_session()
