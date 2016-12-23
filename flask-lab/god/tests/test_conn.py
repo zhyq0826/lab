@@ -19,7 +19,7 @@ def test_session_entries():
 
 
 def init_data():
-    r = requests.get('http://www.toutiao.com/api/article/pc_hot_essay/?count=500', timeout=100)
+    r = requests.get('http://www.toutiao.com/api/article/pc_hot_essay/?count=500', timeout=100),
     entries = []
     users = []
     session = DBSession()
@@ -90,6 +90,40 @@ def test_session():
     time.sleep(60)
 
 
+def test_session_query():
+    session = DBSession()
+
+    tag = session.query(Tag).filter(Tag.id == 20).first()
+    print tag.name
+    tag.name = 'chang'
+    #session.commit()
+    session.rollback()
+    tag = session.query(Tag).filter(Tag.id == 20).first()
+    print tag.name
+
+def download_ad_book():
+    s = [
+        'http://advancedlinuxprogramming.com/alp-folder/advanced-linux-programming.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-toc.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-ch01-advanced-unix-programming-with-linux.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-ch02-writing-good-gnu-linux-software.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-ch03-processes.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-ch04-threads.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-ch05-ipc.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-ch06-mastering-linux.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-ch07-proc-filesystem.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-ch08-linux-system-calls.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-ch09-inline-asm.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-ch10-security.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-ch11-sample-application.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-apA-other-development-tools.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-apB-low-level-io.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-apC-signal-table.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-apD-online-resources.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-apE-open-publication-license.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-apF-gnu-public-license.pdf',
+        'http://advancedlinuxprogramming.com/alp-folder/alp-index.pdf',]
+
 
 if __name__ == '__main__':
-    test_session()
+    test_session_query()
