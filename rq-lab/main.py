@@ -1,6 +1,6 @@
 from rq import Queue
 from redis import Redis
-from task import count_words_at_url, block_task
+from task import count_words_at_url, block_task, timeout_task
 import time
 
 # Tell RQ what Redis connection to use
@@ -17,3 +17,5 @@ print job.result   # => 889
 
 job = q.enqueue(block_task)
 print job.status
+
+job = q.enqueue(timeout_task, timeout=15)

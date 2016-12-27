@@ -1,4 +1,5 @@
 import requests
+import time
 
 
 def count_words_at_url(url):
@@ -7,6 +8,9 @@ def count_words_at_url(url):
 
 
 def block_task():
-    import time
     time.sleep(10)
     return 'finish'
+
+
+def timeout_task():
+    time.sleep(20)
