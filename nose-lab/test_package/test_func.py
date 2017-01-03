@@ -46,3 +46,11 @@ def test_function_a():
 def test_function_b():
     with assert_raises(ValueError):
         raise TypeError('hello')
+
+
+@attr(tags=['b'])
+def test_function_c():
+    with assert_raises(ValueError):
+        raise TypeError('hello')
+
+
