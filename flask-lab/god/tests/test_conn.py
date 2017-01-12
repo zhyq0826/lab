@@ -124,6 +124,9 @@ def download_ad_book():
         'http://advancedlinuxprogramming.com/alp-folder/alp-apF-gnu-public-license.pdf',
         'http://advancedlinuxprogramming.com/alp-folder/alp-index.pdf',]
 
+def test_query_in():
+    session = DBSession()
+    print session.query(Tag).filter(Tag.id.in_([10, 20, 100])).all()
 
 if __name__ == '__main__':
     test_session_query()
