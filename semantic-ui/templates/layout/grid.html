@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="../../css/semantic.css">
+    <script type="text/javascript" src="../../js/jquery.js" ></script>
+    <script src="../../js/semantic.js" ></script>
+    <title>Document</title>
+    <style>
+        .grid>.column:not([class*="row"]) {
+            border: 1px solid red;
+        }
+
+        .row>.column {
+            border: 1px solid red;
+        }
+    </style>
+</head>
+<body>
+    <h3>column auto flow to next row</h3>
+    <div class="ui grid">
+        <div class="four wide column">
+            content
+        </div>
+        <div class="four wide column">
+            content
+        </div>
+        <div class="four wide column">
+            content
+        </div>
+        <div class="four wide column">
+            content
+        </div>
+
+        <div class="four wide column">
+            content
+        </div>
+        <div class="four wide column">
+            content
+        </div>
+        <div class="four wide column">
+            content
+        </div>
+        <div class="four wide column">
+            content
+        </div>
+    </div>
+    
+    <h3>add row force column flow to next row</h3>
+    <div class="ui three column grid">
+        <div class="column">
+            
+        </div>
+        <div class="row">
+            <div class="column">
+                content
+            </div>
+            <div class="column">
+                content
+            </div>
+            <div class="column">
+                content
+            </div>
+        </div>
+    </div>
+
+    <h3>specify column count force column to flow to next row</h3>
+    <div class="ui three column grid">
+        <div class="column"></div>
+        <div class="column"></div>
+        <div class="column"></div>
+        <div class="column"></div>
+        <div class="column"></div>
+        <div class="column"></div>
+        <div class="row">
+            <div class="column">content</div>
+            <div class="column">content</div>
+            <div class="column">content</div>
+            <!-- 称满一行 -->
+        </div>
+    </div>
+    
+    <h3>column in row have no height</h3>
+    <div class="ui three column grid">
+        <div class="row">
+            <div class="column">
+            </div>
+            <div class="column">
+            </div>
+            <div class="column">
+            </div>
+        </div>
+    </div>
+
+    <h3>specify column width</h3>
+    <div class="ui grid">
+        <div class="four wide column"></div>
+        <div class="column"></div>
+        <div class="column"></div>
+    </div>
+
+    <h3>format grid must specify row</h3>
+    <div class="ui celled grid">
+        <div class="row" >
+            <div class="column">content</div>
+            <div class="column">content</div>
+            <div class="column">content</div>
+        </div>
+    </div>
+    
+    <h3>center column</h3>
+    <div class="ui two column centered grid">
+        <div class="column"></div>
+        <div class="four column centered row">
+          <div class="column">content</div>
+          <div class="column">content</div>
+        </div>
+    </div>
+
+    <h3>text align</h3>
+    <div class="ui grid">
+        <div class="right aligned eight wide column">
+          right aligned column
+        </div>
+        <div class="left aligned eight wide column">
+          left aligned column
+        </div>
+        <div class="center aligned two column row">
+          <div class="column">
+            center aligned row
+          </div>
+          <div class="column">
+            center aligned row
+          </div>
+        </div>
+        <div class="sixteen wide right aligned column">
+          right aligned column
+        </div>
+    </div>
+    
+    <h3>垂直居中</h3>
+    <div class="ui middle aligned four column centered grid">
+        <div class="row">
+          <div class="column">
+            <img class="ui wireframe image" src="assets/images/wireframe/image.png">
+          </div>
+          <div class="column">
+            <img class="ui wireframe image" src="assets/images/wireframe/image.png">
+            <img class="ui wireframe image" src="assets/images/wireframe/image.png">
+          </div>
+          <div class="column">
+            <img class="ui wireframe image" src="assets/images/wireframe/image.png">
+          </div>
+        </div>
+    </div>
+
+    <h3>均分row，使column 等宽</h3>
+    <div class="ui equal width grid">
+        <div class="row">
+          <div class="column">column</div>
+          <div class="column">column</div>
+          <div class="column">column</div>
+          <div class="column">column</div>
+        </div>
+        <div class="row">
+          <div class="column">column</div>
+          <div class="column">column</div>
+          <div class="column">column</div>
+        </div>
+    </div>
+</body>
+</html>
