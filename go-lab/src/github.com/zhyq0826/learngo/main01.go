@@ -6,12 +6,17 @@ func main() {
     for i := 0; i < 10; i++ {
         fmt.Printf("%d\n",i)
     }
-    fmt.Printf("goto loop")
+    fmt.Printf("goto loop \n")
     gotoloop()
-    fmt.Printf("array loop")
-    arr := [...]int{1,2,3,4}
-    for i := 0; i < len(arr); i++ {
-        fmt.Printf("%d\n", arr[i])
+    fmt.Printf("array loop \n")
+    arr := [...]int{1,2,3,4,}
+    for _, v := range(arr){
+        fmt.Printf("%d\n", v)
+    }
+
+    switch 0 {
+        case 0:
+            fmt.Printf("case 0")
     }
 }
 
