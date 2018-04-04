@@ -11,4 +11,6 @@ def main():
 
 
 if __name__ == '__main__':
+    # redis 90s
+    # rabbitmq 89s
     main()
