@@ -24,3 +24,11 @@ t02_worker_ack:
 	python tutorial02_worker_ack.py
 t02_worker_persist:
 	python tutorial02_worker_persist.py
+t03_send:
+	python tutorial03_send.py
+t03_receive:
+	python tutorial03_receive.py
+t04_send:
+	python tutorial04_send.py
+t04_receive:
+	python tutorial04_receive.py

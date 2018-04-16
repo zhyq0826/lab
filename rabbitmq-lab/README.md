@@ -108,3 +108,24 @@ channel.basic_qos(prefetch_count=1)
 
 告诉 rabbitmq 直到 worker 进行消息确认之前都不再发送新的消息
 
+
+## exchange 
+
+sender 默认是不直接和 queue 交互，所有 message 都是通过 exchange 进行转发的，sender 甚至不知道 queue 的存在。
+
+exchange 有 4 中类型， direct, topic, headers and fanout。
+
+### fanout
+
+The fanout exchange is very simple. As you can probably guess from the name, it just broadcasts all the messages it receives to all the queues it knows. And that's exactly what we need for our logge。
+
+
+直接广播 message 到它能接触到的任何 queue
+
+
+### binding
+
+exchange 是如何知道 queue 的？就是通过 binding 实现。
+
+
+
