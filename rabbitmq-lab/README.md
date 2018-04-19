@@ -122,10 +122,34 @@ The fanout exchange is very simple. As you can probably guess from the name, it 
 
 直接广播 message 到它能接触到的任何 queue
 
+### direct
+
+direct change 可以直接路由 change 指定的 key 和 binding key 相同的 queue
+
+### topic
+
+topic 的 routing key 是按照一定规则进行路由的
+
+- * (star) can substitute for exactly one word.
+- # (hash) can substitute for zero or more words.
+
+
+```
+x--> *.*.rabbit Q2
+x--> lazy.# Q2
+x--> *.orange.* Q1
+
+```
+
+A message with a routing key set to "quick.orange.rabbit" will be delivered to both queues. Message "lazy.orange.elephant" also will go to both of them. On the other hand "quick.orange.fox" will only go to the first queue, and "lazy.brown.fox" only to the second. "lazy.pink.rabbit" will be delivered to the second queue only once, even though it matches two bindings. "quick.brown.fox" doesn't match any binding so it will be discarded.
+
+What happens if we break our contract and send a message with one or four words, like "orange" or "quick.orange.male.rabbit"? Well, these messages won't match any bindings and will be lost
+
+
 
 ### binding
 
-exchange 是如何知道 queue 的？就是通过 binding 实现。
+exchange 是如何知道 queue 的？就是通过 binding 实现，exchange 在 declare 时会指定 routing key，这个 routing key 可以按照规则和 binding 上的 routing key 进行匹配来来路由
 
 
 

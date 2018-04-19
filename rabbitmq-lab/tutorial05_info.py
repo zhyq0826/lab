@@ -4,8 +4,8 @@
 from conn import channel, connection
 
 
-channel.exchange_declare(exchange='direct_logs',
-                         exchange_type='direct')
+channel.exchange_declare(exchange='topic_logs',
+                         exchange_type='topic')
 
 
 # random queue result.method.queue
@@ -13,9 +13,11 @@ channel.exchange_declare(exchange='direct_logs',
 # the queue should be deleted. There's an exclusive flag for that:
 result = channel.queue_declare(exclusive=True)
 queue_name = result.method.queue
-channel.queue_bind(exchange='direct_logs',
+
+# routing key specify the queue consume certain message
+channel.queue_bind(exchange='topic_logs',
                    queue=queue_name,
-                   routing_key='error'
+                   routing_key='*.info'
                )
 
 print(' [*] Waiting for logs. To exit press CTRL+C')

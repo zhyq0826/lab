@@ -30,5 +30,13 @@ t03_receive:
 	python tutorial03_receive.py
 t04_send:
 	python tutorial04_send.py
-t04_receive:
-	python tutorial04_receive.py
+t04_error:
+	python tutorial04_error.py
+t04_info:
+	python tutorial04_info.py
+t05_send:
+	python tutorial05_send.py
+t05_error:
+	python tutorial05_error.py
+t05_info:
+	python tutorial05_info.py
